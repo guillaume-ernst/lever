@@ -241,6 +241,23 @@ final class ParseDeskStatusTests: XCTestCase {
         XCTAssertEqual(DeskProtocol.parseDeskStatus(makeData([0x01, 0x00, 0x00])), .ok)
     }
 
+    func testUnconfirmedStatusCodesAreNotFaults() {
+        // Captured on a healthy desk: 0x10 pulses while a commanded move is in
+        // flight and 0x09 ~10 s after a successful arrival. Both are routine
+        // event codes, not faults — treating them as fatal disconnects a
+        // working desk.
+        XCTAssertEqual(DeskProtocol.parseDeskStatus(makeData([0x01, 0x00, 0x10])), .ok)
+        XCTAssertEqual(DeskProtocol.parseDeskStatus(makeData([0x01, 0x00, 0x09])), .ok)
+    }
+
+    func testUnknownStatusCodeIsNotFault() {
+        XCTAssertEqual(DeskProtocol.parseDeskStatus(makeData([0x01, 0x00, 0x99])), .ok)
+    }
+
+    func testWrongPrefixIsOk() {
+        XCTAssertEqual(DeskProtocol.parseDeskStatus(makeData([0x02, 0x00, 0x1e])), .ok)
+    }
+
     func testShortPayloadIsOk() {
         XCTAssertEqual(DeskProtocol.parseDeskStatus(makeData([0x01, 0x00])), .ok)
     }

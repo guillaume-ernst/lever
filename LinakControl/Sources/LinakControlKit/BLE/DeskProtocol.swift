@@ -60,14 +60,30 @@ public enum DeskProtocol {
 
     // MARK: - Decoding
 
+    /// Status codes confirmed on real control boxes to mean an actionable fault.
+    ///
+    /// `99fa0003` is undocumented; the original mapping treated ANY non-zero
+    /// byte 2 as fatal. That fails on firmwares that push routine event codes:
+    /// `0x10` while commanded moves are in flight and `0x09` ~10 s after a
+    /// successful arrival — both on a desk that accepts every command normally.
+    /// So the policy is inverted: only these confirmed codes stand the
+    /// connection down; anything else is logged for future mapping. Genuine
+    /// failures (desk refusing to move) are still caught by the stall watchdog.
+    private static let faultStatusCodes: Set<UInt8> = [
+        0x1d, // position reference lost — control box shows Initialise
+        0x1e, // E16 — illegal key combination, needs reset/re-reference
+        0x17, // E26 — channel 4 missing, possible motor/cable fault
+    ]
+
     /// Parse a desk status notification from characteristic 99fa0003.
     ///
-    /// Fault pulses observed as `[0x01, 0x00, code]` with `code != 0`; an empty
-    /// or all-clear payload decodes to `.ok`. Only the fault case is actionable —
-    /// the desk clears the pulse to empty shortly after, so callers must not
-    /// treat `.ok` as "fault resolved".
+    /// Fault pulses observed as `[0x01, 0x00, code]` with a `code` in
+    /// ``faultStatusCodes``; an empty payload or any other value decodes to
+    /// `.ok`. Only the fault case is actionable — the desk clears the pulse to
+    /// empty shortly after, so callers must not treat `.ok` as "fault resolved".
     public static func parseDeskStatus(_ data: Data) -> DeskStatus {
-        guard data.count >= 3, data[0] == 0x01, data[2] != 0x00 else { return .ok }
+        guard data.count >= 3, data[0] == 0x01,
+              faultStatusCodes.contains(data[2]) else { return .ok }
         return .fault(code: data[2])
     }
 
