@@ -45,6 +45,11 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
     // Connect continuation — resolves after service+characteristic discovery
     private var connectContinuation: CheckedContinuation<Void, Error>?
 
+    // Fallback scan state — when retrievePeripherals misses a paired desk
+    // (empty known-peripherals list after a fresh app launch), connect() scans
+    // for the ID instead of failing outright.
+    private var pendingScanConnectId: UUID?
+
     // MARK: - BLEControllerProtocol — stateStream
 
     public let stateStream: AsyncStream<BLEState>
@@ -126,14 +131,32 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
                 let peripherals = centralManager.retrievePeripherals(withIdentifiers: [peripheralId])
                 FileLog.debug("connect: retrievePeripherals returned \(peripherals.count) result(s)", category: "ble")
 
+                self.connectContinuation = continuation
+
                 guard let peripheral = peripherals.first else {
-                    FileLog.debug("connect: no peripheral found for UUID", category: "ble")
-                    continuation.resume(throwing: BLEError.connectionFailed)
+                    // The paired desk may be advertising but unknown to this
+                    // central session — scan for it instead of failing.
+                    // Scan is unfiltered: once bonded, the desk advertises
+                    // without its service UUID in the advertisement payload,
+                    // so a service-filtered scan never sees it. Match by
+                    // peripheral.identifier in didDiscover instead.
+                    FileLog.debug("connect: no peripheral found for UUID, scanning", category: "ble")
+                    self.pendingScanConnectId = peripheralId
+                    self.centralManager.scanForPeripherals(
+                        withServices: nil,
+                        options: nil
+                    )
+                    self.bleQueue.asyncAfter(deadline: .now() + 6) { [weak self] in
+                        guard let self, self.pendingScanConnectId == peripheralId else { return }
+                        FileLog.debug("connect: scan fallback timed out", category: "ble")
+                        self.pendingScanConnectId = nil
+                        self.centralManager.stopScan()
+                        self.takeConnectContinuation()?.resume(throwing: BLEError.connectionFailed)
+                    }
                     return
                 }
 
                 FileLog.debug("connect: calling centralManager.connect for '\(peripheral.name ?? "unknown")'", category: "ble")
-                self.connectContinuation = continuation
                 self.connectedPeripheral = peripheral
                 peripheral.delegate = self
                 self.centralManager.connect(peripheral, options: nil)
@@ -281,6 +304,7 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
 
     private func cleanUpOnDisconnect() {
         connectedPeripheral = nil
+        pendingScanConnectId = nil
         discoveredCharacteristics = [:]
         takeConnectContinuation()?.resume(throwing: BLEError.connectionFailed)
         for (_, cont) in writeContinuations { cont.resume(throwing: BLEError.notConnected) }
@@ -321,6 +345,18 @@ extension BLEController: CBCentralManagerDelegate {
     ) {
         let name = String((peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "Unknown").prefix(64))
         FileLog.debug("didDiscover: '\(name)' id=\(peripheral.identifier) rssi=\(RSSI)", category: "ble")
+
+        // Connect fallback: a paired desk found by the scan — stop scanning and connect.
+        if pendingScanConnectId == peripheral.identifier, connectContinuation != nil {
+            pendingScanConnectId = nil
+            centralManager.stopScan()
+            FileLog.debug("didDiscover: matched pending connect, connecting to '\(name)'", category: "ble")
+            connectedPeripheral = peripheral
+            peripheral.delegate = self
+            centralManager.connect(peripheral, options: nil)
+            return
+        }
+
         let desk = DiscoveredDesk(
             peripheralId: peripheral.identifier,
             name: name,
