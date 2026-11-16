@@ -180,6 +180,23 @@ final class CLIPresetCommandIntegrationTests: XCTestCase {
         // Preset 1 is 730 mm from the happy-path fixture.
         XCTAssertEqual(targetMM, 730, "goPreset response must carry the preset's configured height")
     }
+
+    func testPresetCommandAppliesDeskOffsetToTargetHeight() async throws {
+        let socketPath = makeTempSocketPath()
+        var config = AppConfig.default
+        config.deskOffsetMM = 625
+        let configStore = makeTempConfigStore(config: config)
+        let manager = try await makeConnectedManager(configStore: configStore)
+        let server = IPCServer(deskManager: manager, configStore: configStore, socketPath: socketPath)
+        try await startServer(server, socketPath: socketPath)
+        defer { server.stop() }
+
+        let client = IPCClient(socketPath: socketPath)
+        let targetMM = try client.goPreset(index: 1)
+
+        // IPC heights are absolute like StatusResult's — raw 730 + offset 625.
+        XCTAssertEqual(targetMM, 1355, "goPreset response must apply the configured desk offset")
+    }
 }
 
 // MARK: - testHeightCommandReturnsValidJSON

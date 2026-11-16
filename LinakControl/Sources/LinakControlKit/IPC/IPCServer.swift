@@ -304,7 +304,10 @@ public final class IPCServer: @unchecked Sendable {
         do {
             try await deskManager.goToPreset(index: index)
             let state = await deskManager.currentState
+            // Same display convention as buildStatusResult: heights returned over
+            // IPC are absolute (deskOffsetMM applied), not raw.
             let targetMM = state.presets.first(where: { $0.index == index })?.heightMM
+                .map { $0 + state.deskOffsetMM }
             return IPCResponse(id: request.id, result: .ok(targetMM: targetMM), error: nil)
         } catch {
             return deskErrorResponse(id: request.id, error: error)
