@@ -78,7 +78,9 @@ final class DeskCharacteristicsTests: XCTestCase {
     }
 
     func testPreflightBytes() {
-        XCTAssertEqual(DeskCommand.preflight, Data([0x00, 0x00]))
+        // Preflight is the stop key — a null key code (0x00) is rejected as an
+        // illegal key combination (E16) on some control-box firmwares.
+        XCTAssertEqual(DeskCommand.preflight, DeskCommand.stop)
     }
 
     func testHeartbeatBytes() {

@@ -72,7 +72,10 @@ public enum DeskCommand {
     public static let wakeUp = Data([0xFE, 0x00])
 
     /// Preflight — enable the Reference Input service before sending move-to commands.
-    public static let preflight = Data([0x00, 0x00])
+    /// Uses the stop key (0xFF): the community-documented sequence is wake-up then stop.
+    /// A null key code (0x00) is rejected as an illegal key combination (E16) on
+    /// some control-box firmwares, which faults every preset recall.
+    public static let preflight = Data([0xFF, 0x00])
 
     // MARK: Target/Heartbeat characteristic commands (written to DeskUUID.targetHeartbeat / 0x0031)
 
