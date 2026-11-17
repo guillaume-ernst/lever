@@ -10,7 +10,7 @@ Lever has two front ends. They share the same paired desk and the same configura
 
 After launching `Lever.app`, the menu bar shows a single item: the current desk height as a bare number (e.g. `114.4` — the unit is your configured one).
 
-- **Left-click — preset menu.** A dropdown listing the four presets and their stored heights; pick one to move there. An empty slot shows `+ Add` and saves the current height when selected. The menu ends with `Settings…`, which opens the popover.
+- **Left-click — preset menu.** A dropdown listing the four hardware presets (numbered 1–4) followed by your named software presets; pick one to move there. An empty slot shows `+ Add` and saves the current height when selected. `Add Preset…` captures the current height as a new software preset, and the menu ends with `Settings…`, which opens the popover.
 - **Right-click — control popover.** The full instrument: live height, manual up/down controls, the 2×2 preset grid, and the settings gear.
 - **Fault state.** On a desk fault the item gains an orange warning triangle; hover it for the cause.
 - Hiding the readout ("Show height in menu bar" off in Settings) falls back to a plain desk icon; both gestures keep working.
@@ -23,7 +23,7 @@ The CLI talks to the running menu bar app over a Unix socket, so the app must be
 deskctl status
 ```
 
-A successful run prints the connection state, the desk name, the current height, and the four preset slots (`*` marks the active one):
+A successful run prints the connection state, the desk name, the current height, the four preset slots, and any software presets (`*` marks the active one):
 
 ```
 Lever Daemon
@@ -31,6 +31,7 @@ Lever Daemon
   Desk:       LINAK-DPG1C-1A2B
   Height:     72.4 cm
   Presets:    1=63.0cm  2=78.5cm*  3=110.0cm  4=120.0cm
+  Software:   Focus=63.0cm*  Call=110.0cm
 ```
 
 If `deskctl` reports `Daemon: not running`, launch the app first.
@@ -46,7 +47,7 @@ The point of presets is one-click switching between sitting and standing height.
 1. Move the desk to your preferred sitting height (manual up/down in the popover, or `deskctl up --manual` then `deskctl stop`).
 2. Save it to preset 1 — open the popover **Settings**, find preset 1, and tap **Save current height**. From the CLI: `deskctl preset 1 --save`.
 3. Repeat at your standing height and save to preset 2.
-4. Switch between the two from the menu bar Zone 2 dropdown, the popover preset grid, or:
+4. Switch between the two from the left-click preset menu, the popover preset grid, or:
 
    ```bash
    deskctl preset 1   # sit
@@ -63,6 +64,26 @@ deskctl config label 2 Standing
 deskctl config label 3 --clear   # remove a label
 deskctl config label 2           # show current label without changing it
 ```
+
+**Software presets — beyond the four hardware slots**
+
+The hardware only stores four positions. Software presets live in the app's config: unlimited count, real names instead of slot numbers, and the same movement loop when invoked.
+
+- **From the menu bar:** `Add Preset…` at the bottom of the left-click menu captures the current height under a generated name (`Preset 5`, `Preset 6`, …).
+- **From Settings:** the *Presets* section lists each software preset with an inline name field, its stored height, a "set to current height" action, reorder arrows, and delete.
+- **From the CLI:**
+
+```bash
+deskctl preset add Focus        # capture current height as "Focus"
+deskctl preset Focus            # move to it (names are case-insensitive)
+deskctl preset Focus --save     # re-point "Focus" at the current height
+deskctl preset rename Focus Sit # rename it
+deskctl preset remove Sit       # delete it
+```
+
+Name matching is case-insensitive; `deskctl preset standing desk` works for a preset named `Standing Desk` even without quotes. If a name also matches a UUID `id` it resolves by id first — pick another name if you hit a collision (unlikely).
+
+A note on scope: `--save` on a hardware index writes into the desk's flash (the DPG1C's own memory); `--save` on a software name only updates the app's config. Same flag, different backing store.
 
 **Manual movement when no preset fits**
 
@@ -105,7 +126,11 @@ All commands are subcommands of `deskctl`. Every command except `config show`, `
 | `deskctl up` | Move the desk up. | `--auto`, `--manual` (mutually exclusive) |
 | `deskctl down` | Move the desk down. | `--auto`, `--manual` (mutually exclusive) |
 | `deskctl stop` | Stop any active movement immediately. | — |
-| `deskctl preset <1-4>` | Move to the named preset. | `--save` (overwrite that slot with the current height) |
+| `deskctl preset <1-4>` | Move to the hardware preset in that slot. | `--save` (overwrite the slot with the current height) |
+| `deskctl preset <name>` | Move to a software preset by name (case-insensitive). | `--save` (re-point the preset at the current height) |
+| `deskctl preset add <name>` | Create a software preset at the current height. | — |
+| `deskctl preset remove <name>` | Delete a software preset. | aliases: `rm`, `delete` |
+| `deskctl preset rename <name> <new>` | Rename a software preset. | — |
 | `deskctl config show` | Print the full config JSON. | — |
 | `deskctl config reset` | Wipe config back to defaults (clears pairing). Prompts unless forced. | `--force` |
 | `deskctl config label <1-4> [text]` | Show, set, or clear a preset label. | `--clear` |
@@ -115,7 +140,8 @@ All commands are subcommands of `deskctl`. Every command except `config show`, `
 
 A few details that are not obvious from `--help`:
 
-- **Preset indices are validated** — `deskctl preset 5` returns a `ValidationError`. The same goes for labels.
+- **Preset indices are validated** — `deskctl preset 5` returns a `ValidationError`. Anything that is not a number or an action keyword is treated as a software preset name; unknown names come back as `software preset not found` (exit code 1). The same goes for labels.
+- **Names resolve case-insensitively** — `deskctl preset focus` and `deskctl preset Focus` hit the same preset. `add`, `remove`, `rm`, `delete`, and `rename` are reserved words; avoid naming a preset exactly `add` (you can still reach it — and remove it — through Settings in the app).
 - **`config show` reads the config file directly**, so it works even if the daemon is stopped. Same for `config reset` and `config label`.
 - **`config reset` clears pairing too** — the next app launch goes back to first-run scanning. Use `--force` only in scripts where you're certain.
 - **`service install`** does not register anything itself; it just prints the steps for the Settings panel.
@@ -143,6 +169,11 @@ A few details that are not obvious from `--help`:
     {"index": 4}
   ],
   "active_preset": 2,
+  "software_presets": [
+    {"id": "F5A0…", "name": "Focus", "height_mm": 630},
+    {"id": "8B21…", "name": "Call", "height_mm": 1100}
+  ],
+  "active_software_preset": "F5A0…",
   "needs_reference": false
 }
 ```

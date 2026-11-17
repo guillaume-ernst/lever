@@ -166,7 +166,9 @@ app has one window size, and it is small.
 - Settings is a scrolled column of labeled rows with plain-text section
   headers (secondary, subheadline semibold).
 - The menu bar holds a **single status item**: the bare height number
-  (unit implied) — e.g. `70.9`. Left-click drops the preset menu,
+  (unit implied) — e.g. `70.9`. Left-click drops the preset menu
+  (hardware slots first, named software presets after, `Add Preset…`
+  and `Settings…` at the foot),
   right-click opens the popover.
 - Disconnected cells dim to 40 % opacity rather than hiding — the layout
   never jumps.
