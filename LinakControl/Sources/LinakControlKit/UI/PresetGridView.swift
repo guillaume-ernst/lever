@@ -10,7 +10,7 @@ import SwiftUI
 /// Each cell displays the preset index and its stored height.
 /// The active preset is highlighted with an accent border.
 /// The target preset pulses during movement.
-/// Tapping an unset preset is a no-op (the button is disabled).
+/// Double-tapping an unset cell saves the current height into that slot.
 public struct PresetGridView: View {
 
     @ObservedObject public var viewModel: DeskViewModel
@@ -33,7 +33,13 @@ public struct PresetGridView: View {
                     isTarget: preset.index == viewModel.targetPreset,
                     unit: viewModel.unit,
                     isConnected: viewModel.connectionState == .connected,
-                    onTap: { viewModel.goToPreset(index: preset.index) }
+                    onTap: {
+                        if preset.heightMM == nil {
+                            viewModel.savePreset(index: preset.index)
+                        } else {
+                            viewModel.goToPreset(index: preset.index)
+                        }
+                    }
                 )
             }
         }
@@ -63,9 +69,15 @@ private struct PresetCell: View {
         VStack(spacing: 2) {
             Text("\(preset.index)")
                 .font(.headline)
-            Text(heightText)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            if hasHeight {
+                Text(heightText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                Text("+ Add")
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
+            }
             if isTarget {
                 Text("Moving...")
                     .font(.caption2)
@@ -83,8 +95,9 @@ private struct PresetCell: View {
         .scaleEffect(isPulsing ? 0.96 : 1.0)
         .opacity(cellOpacity)
         .contentShape(Rectangle())
+        .help(hasHeight ? "" : "Double-click to save the current height as preset \(preset.index)")
         .onTapGesture(count: 2) {
-            guard isConnected, hasHeight else { return }
+            guard isConnected else { return }
             onTap()
         }
         .onChange(of: isTarget) { newValue in
@@ -96,7 +109,7 @@ private struct PresetCell: View {
 
     private var cellOpacity: Double {
         if !isConnected { return 0.4 }
-        if !hasHeight { return 0.4 }
+        if !hasHeight { return 0.65 }
         return 1.0
     }
 

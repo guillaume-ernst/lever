@@ -218,7 +218,7 @@ public final class MenuBarController: NSObject {
     }
 
     private func presetMenuItem(for preset: PresetPosition) -> NSMenuItem {
-        let heightText = preset.heightMM.map { HeightConverter.display(mm: $0, unit: viewModel.unit) } ?? "—"
+        let heightText = preset.heightMM.map { HeightConverter.display(mm: $0, unit: viewModel.unit) } ?? "+ Add"
         let prefix = (preset.index == viewModel.targetPreset) ? "→ " : ""
         let title = "\(prefix)\(preset.index)  \(heightText)"
 
@@ -230,6 +230,11 @@ public final class MenuBarController: NSObject {
     }
 
     @objc private func presetMenuItemSelected(_ sender: NSMenuItem) {
-        viewModel.goToPreset(index: sender.tag)
+        // Empty slot → "+ Add" means save the current height into it.
+        if viewModel.presets.first(where: { $0.index == sender.tag })?.heightMM == nil {
+            viewModel.savePreset(index: sender.tag)
+        } else {
+            viewModel.goToPreset(index: sender.tag)
+        }
     }
 }

@@ -234,7 +234,7 @@ public actor DeskManager {
     /// - Throws: `DeskError.notConnected` if not connected; `DeskError.presetNotSet`
     ///   if the index is out of range or no current height is known.
     public func savePreset(index: Int) async throws {
-        try requireConnected()
+        try await ensureConnectedForAction()
         try await executeSavePreset(index: index)
     }
 
