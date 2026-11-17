@@ -295,10 +295,14 @@ final class BLEControllerDeadlineTests: XCTestCase {
 
     /// A second connect while one is parked must still be rejected fast —
     /// deadlines must not change the concurrency guard.
-    func testConnect_concurrentAttempt_stillRejected() async {
+    func testConnect_concurrentAttempt_stillRejected() async throws {
         let controller = BLEController(connectTimeout: 2)
 
         async let first: Void = controller.connect(peripheralId: UUID())
+        // Let the first call's bleQueue block land and park its continuation
+        // before the second connect is enqueued — dispatch ordering across
+        // tasks is not guaranteed.
+        try await Task.sleep(for: .milliseconds(150))
         do {
             try await controller.connect(peripheralId: UUID())
             XCTFail("concurrent connect must be rejected")

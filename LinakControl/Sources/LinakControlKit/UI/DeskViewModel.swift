@@ -271,11 +271,7 @@ public final class DeskViewModel: ObservableObject {
         } else {
             try? loginItemManager.unregister()
         }
-        Task {
-            var config = (try? configStore.load()) ?? .default
-            config.startAtLogin = enabled
-            try? configStore.save(config)
-        }
+        persistConfig { $0.startAtLogin = enabled }
     }
 
     // MARK: - Settings actions
