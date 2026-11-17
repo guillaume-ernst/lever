@@ -170,4 +170,34 @@ final class ConfigStoreTests: XCTestCase {
         let loaded = try store.load()
         XCTAssertEqual(loaded.pairedDeskName, "Second")
     }
+
+    // MARK: - preset_labels normalization
+
+    /// A hand-edited or truncated `preset_labels` array must be padded to one
+    /// entry per preset slot so consumers indexing slots 1-4 cannot crash.
+    func testLoadPadsShortPresetLabelsArray() throws {
+        let (store, dir) = try makeTempStore()
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let json = #"{ "preset_labels": ["Sit"] }"#
+        try json.write(to: dir.appendingPathComponent("config.json"), atomically: true, encoding: .utf8)
+
+        let loaded = try store.load()
+
+        XCTAssertEqual(loaded.presetLabels.count, 4)
+        XCTAssertEqual(loaded.presetLabels[0], "Sit")
+        XCTAssertEqual(loaded.presetLabels[1], nil)
+        XCTAssertEqual(loaded.presetLabels[3], nil)
+    }
+
+    func testLoadKeepsExtraPresetLabelsEntries() throws {
+        let (store, dir) = try makeTempStore()
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let json = #"{ "preset_labels": ["a", "b", "c", "d", "e"] }"#
+        try json.write(to: dir.appendingPathComponent("config.json"), atomically: true, encoding: .utf8)
+
+        let loaded = try store.load()
+
+        XCTAssertEqual(loaded.presetLabels.count, 5)
+        XCTAssertEqual(loaded.presetLabels[4], "e")
+    }
 }

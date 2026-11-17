@@ -117,6 +117,10 @@ public struct AppConfig: Codable, Equatable {
 
         if let labels = try c.decodeIfPresent([String?].self, forKey: .presetLabels) {
             presetLabels = labels
+            // Guarantee at least one entry per preset slot — a hand-edited or
+            // truncated config must not crash `deskctl config label` or any
+            // other consumer indexing slots 1-4.
+            while presetLabels.count < 4 { presetLabels.append(nil) }
         } else {
             presetLabels = [
                 try c.decodeIfPresent(String.self, forKey: .preset1Label),
