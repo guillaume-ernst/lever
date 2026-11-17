@@ -41,6 +41,9 @@ public enum BLEError: Error, @unchecked Sendable {
     case connectFailure(Error)
     case notifyFailure(Error)
     case connectionFailed
+    /// An ATT operation (connect, read, write, notify-toggle) never answered
+    /// within its deadline — the continuation was expired instead of parking forever.
+    case timeout
 }
 
 // MARK: - BLEControllerProtocol

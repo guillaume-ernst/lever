@@ -50,6 +50,11 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
     // for the ID instead of failing outright.
     private var pendingScanConnectId: UUID?
 
+    // Operation deadlines — every parked continuation gets one, so a
+    // non-responsive link cannot freeze the caller forever.
+    private let connectTimeout: TimeInterval
+    private let operationTimeout: TimeInterval
+
     // MARK: - BLEControllerProtocol — stateStream
 
     public let stateStream: AsyncStream<BLEState>
@@ -60,7 +65,9 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
 
     // MARK: - Init
 
-    override public init() {
+    public init(connectTimeout: TimeInterval = 15, operationTimeout: TimeInterval = 5) {
+        self.connectTimeout = connectTimeout
+        self.operationTimeout = operationTimeout
         var stateCont: AsyncStream<BLEState>.Continuation!
         stateStream = AsyncStream { continuation in
             stateCont = continuation
@@ -132,6 +139,21 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
                 FileLog.debug("connect: retrievePeripherals returned \(peripherals.count) result(s)", category: "ble")
 
                 self.connectContinuation = continuation
+
+                // Overall connect deadline — covers both the direct-connect
+                // path (centralManager.connect + discovery) and the scan
+                // fallback. Whichever taker runs first on bleQueue wins, so
+                // the continuation resumes exactly once.
+                self.bleQueue.asyncAfter(deadline: .now() + self.connectTimeout) { [weak self] in
+                    guard let self, let cont = self.takeConnectContinuation() else { return }
+                    FileLog.debug("connect: operation timed out", category: "ble")
+                    self.pendingScanConnectId = nil
+                    self.centralManager.stopScan()
+                    if let peripheral = self.connectedPeripheral {
+                        self.centralManager.cancelPeripheralConnection(peripheral)
+                    }
+                    cont.resume(throwing: BLEError.timeout)
+                }
 
                 guard let peripheral = peripherals.first else {
                     // The paired desk may be advertising but unknown to this
@@ -210,6 +232,10 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
                         return
                     }
                     self.writeContinuations[characteristicUUID] = continuation
+                    self.scheduleOperationTimeout { [weak self] in
+                        self?.takeWriteContinuation(for: characteristicUUID)?
+                            .resume(throwing: BLEError.timeout)
+                    }
                 } else {
                     // withoutResponse: fire-and-forget; resolve immediately
                     continuation.resume()
@@ -237,6 +263,10 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
                     return
                 }
                 readContinuations[characteristicUUID] = continuation
+                self.scheduleOperationTimeout { [weak self] in
+                    self?.takeReadContinuation(for: characteristicUUID)?
+                        .resume(throwing: BLEError.timeout)
+                }
                 peripheral.readValue(for: characteristic)
             }
         }
@@ -273,6 +303,10 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
                     return
                 }
                 notifyContinuations[characteristicUUID] = continuation
+                self.scheduleOperationTimeout { [weak self] in
+                    self?.takeNotifyContinuation(for: characteristicUUID)?
+                        .resume(throwing: BLEError.timeout)
+                }
                 peripheral.setNotifyValue(enabled, for: characteristic)
             }
         }
@@ -300,6 +334,16 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
     /// Atomically removes and returns a stored notify continuation for a UUID.
     private func takeNotifyContinuation(for uuid: CBUUID) -> CheckedContinuation<Void, Error>? {
         return notifyContinuations.removeValue(forKey: uuid)
+    }
+
+    /// Bounds a parked ATT continuation. Runs on `bleQueue`; the serial `take*`
+    /// removal makes the deadline and the delegate callback mutually exclusive —
+    /// whichever runs first resumes the continuation, the other is a no-op.
+    private func scheduleOperationTimeout(_ onTimeout: @escaping () -> Void) {
+        bleQueue.asyncAfter(deadline: .now() + operationTimeout) { [weak self] in
+            guard self != nil else { return }
+            onTimeout()
+        }
     }
 
     private func cleanUpOnDisconnect() {

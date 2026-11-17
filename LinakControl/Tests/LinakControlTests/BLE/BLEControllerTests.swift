@@ -265,3 +265,49 @@ final class DiscoveredDeskTests: XCTestCase {
         XCTAssertEqual(desk.rssi, -72)
     }
 }
+
+// MARK: - Operation deadlines
+
+final class BLEControllerDeadlineTests: XCTestCase {
+
+    /// An unknown UUID lands in the scan-fallback path whose parked
+    /// continuation used to be unbounded. With a short connect timeout the
+    /// overall deadline must fire (and beat the built-in 6s scan fallback).
+    func testConnect_unknownPeripheral_timesOutBeforeScanFallback() async {
+        let controller = BLEController(connectTimeout: 0.3)
+
+        let started = ContinuousClock.now
+        do {
+            try await controller.connect(peripheralId: UUID())
+            XCTFail("connect must not succeed for an unknown peripheral")
+        } catch {
+            guard case BLEError.timeout = error else {
+                XCTFail("expected BLEError.timeout, got \(error)")
+                return
+            }
+        }
+        let elapsed = ContinuousClock.now - started
+        XCTAssertLessThan(
+            elapsed, .seconds(4),
+            "deadline must fire well before the 6s scan-fallback timer"
+        )
+    }
+
+    /// A second connect while one is parked must still be rejected fast —
+    /// deadlines must not change the concurrency guard.
+    func testConnect_concurrentAttempt_stillRejected() async {
+        let controller = BLEController(connectTimeout: 2)
+
+        async let first: Void = controller.connect(peripheralId: UUID())
+        do {
+            try await controller.connect(peripheralId: UUID())
+            XCTFail("concurrent connect must be rejected")
+        } catch {
+            guard case BLEError.connectionFailed = error else {
+                XCTFail("expected BLEError.connectionFailed, got \(error)")
+                return
+            }
+        }
+        _ = try? await first
+    }
+}
