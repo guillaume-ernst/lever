@@ -153,6 +153,7 @@ public actor DeskManager {
             $0.isMoving = false
             $0.moveDirection = nil
             $0.speedMMS = 0
+            $0.targetPreset = nil
             // needsReference / faultCode intentionally preserved.
         }
     }
@@ -167,6 +168,10 @@ public actor DeskManager {
         heartbeatTask = nil
         reconnectionTask?.cancel()
         reconnectionTask = nil
+        movementTask?.cancel()
+        movementTask = nil
+        presetMoveTask?.cancel()
+        presetMoveTask = nil
     }
 
     // MARK: - Movement (implementation in DeskManager+Movement.swift)

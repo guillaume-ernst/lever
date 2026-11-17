@@ -64,6 +64,7 @@ extension DeskManager {
         try await ensureConnectedForAction()
         try await recordUserAction()
         await cancelMovementTask()
+        await cancelPresetMoveTask()
 
         // Wake the desk before sending movement commands.
         try? await bleController.write(data: DeskCommand.wakeUp, to: DeskUUID.command, type: .withoutResponse)

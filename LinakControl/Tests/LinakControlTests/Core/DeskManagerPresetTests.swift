@@ -345,6 +345,108 @@ final class DeskManagerPresetSafetyTests: XCTestCase {
     }
 }
 
+// MARK: - Task Lifecycle Tests
+//
+// Regression coverage for the preset-recall task outliving its revocation
+// boundaries: a superseding move, an unexpected disconnect, or a teardown
+// (disconnect/standDown) must all stop the recall's moveTo stream.
+
+final class DeskManagerPresetTaskLifecycleTests: XCTestCase {
+
+    /// A superseding manual move must revoke the preset program: no further
+    /// moveTo writes to targetHeartbeat after the move starts.
+    func testStartMovementCancelsActivePresetMove() async throws {
+        let setup = try await makePresetTestSetup()
+
+        // Start a recall to preset 2 (1105mm) that never arrives.
+        let goToTask = Task { try? await setup.manager.goToPreset(index: 2) }
+        try await Task.sleep(for: .milliseconds(200))
+        let midPreset = await setup.manager.currentState
+        XCTAssertEqual(midPreset.targetPreset, 2, "Preset recall must be active")
+
+        let writeCountAtMove = setup.mock.writtenData.count
+
+        try await setup.manager.moveUp(mode: .manual)
+        // Wait long enough that an unrevoked loop would emit ~3 more writes.
+        try await Task.sleep(for: .milliseconds(350))
+
+        let expectedTarget = DeskCommand.moveTo(tenthsOfMm: UInt16(1105 * 10))
+        let zombieWrites = setup.mock.writtenData.dropFirst(writeCountAtMove).filter {
+            $0.characteristic == DeskUUID.targetHeartbeat && $0.data == expectedTarget
+        }
+        XCTAssertEqual(zombieWrites.count, 0, "Superseded preset recall must stop writing moveTo")
+
+        let state = await setup.manager.currentState
+        XCTAssertNil(state.targetPreset)
+        XCTAssertEqual(state.moveDirection, .up)
+
+        setup.heightCont.finish()
+        _ = await goToTask.result
+    }
+
+    /// An unexpected BLE drop must revoke the recall: no more moveTo writes
+    /// once the link is down, and targetPreset clears.
+    func testHandleDisconnectionCancelsPresetMove() async throws {
+        let setup = try await makePresetTestSetup()
+
+        let goToTask = Task { try? await setup.manager.goToPreset(index: 2) }
+        try await Task.sleep(for: .milliseconds(200))
+        let midPreset = await setup.manager.currentState
+        XCTAssertEqual(midPreset.targetPreset, 2, "Preset recall must be active")
+
+        await setup.manager.handleDisconnection()
+        let writeCountAtDrop = setup.mock.writtenData.count
+
+        try await Task.sleep(for: .milliseconds(350))
+
+        let expectedTarget = DeskCommand.moveTo(tenthsOfMm: UInt16(1105 * 10))
+        let zombieWrites = setup.mock.writtenData.dropFirst(writeCountAtDrop).filter {
+            $0.characteristic == DeskUUID.targetHeartbeat && $0.data == expectedTarget
+        }
+        // At most one write that was already in flight at cancel time may land.
+        XCTAssertLessThanOrEqual(
+            zombieWrites.count, 1,
+            "A dropped link must revoke the preset recall — the zombie loop kept streaming moveTo"
+        )
+
+        let state = await setup.manager.currentState
+        XCTAssertEqual(state.connectionState, .disconnected)
+        XCTAssertNil(state.targetPreset)
+        XCTAssertFalse(state.isMoving)
+
+        setup.heightCont.finish()
+        _ = await goToTask.result
+    }
+
+    /// A user-initiated disconnect must also revoke the recall (shared
+    /// cancelConnectionTasks path with standDown()).
+    func testDisconnectCancelsPresetMove() async throws {
+        let setup = try await makePresetTestSetup()
+
+        let goToTask = Task { try? await setup.manager.goToPreset(index: 2) }
+        try await Task.sleep(for: .milliseconds(200))
+        let midPreset = await setup.manager.currentState
+        XCTAssertEqual(midPreset.targetPreset, 2, "Preset recall must be active")
+
+        await setup.manager.disconnect()
+        let writeCountAtDrop = setup.mock.writtenData.count
+
+        try await Task.sleep(for: .milliseconds(350))
+
+        let expectedTarget = DeskCommand.moveTo(tenthsOfMm: UInt16(1105 * 10))
+        let zombieWrites = setup.mock.writtenData.dropFirst(writeCountAtDrop).filter {
+            $0.characteristic == DeskUUID.targetHeartbeat && $0.data == expectedTarget
+        }
+        XCTAssertLessThanOrEqual(
+            zombieWrites.count, 1,
+            "disconnect() must revoke the preset recall — the zombie loop kept streaming moveTo"
+        )
+
+        setup.heightCont.finish()
+        _ = await goToTask.result
+    }
+}
+
 // MARK: - Timeout Tests
 
 final class DeskManagerPresetTimeoutTests: XCTestCase {
