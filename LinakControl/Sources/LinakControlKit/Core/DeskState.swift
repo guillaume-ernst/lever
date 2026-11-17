@@ -1,6 +1,8 @@
 // DeskState.swift
 // LinakControl
 
+import Foundation
+
 // MARK: - ConnectionState
 
 public enum ConnectionState: Equatable, Sendable {
@@ -44,6 +46,15 @@ public struct DeskState: Sendable {
     public var presets: [PresetPosition]
     public var activePreset: Int?
 
+    /// App-side named presets beyond the hardware slots (config-backed).
+    public var softwarePresets: [SoftwarePreset]
+
+    /// Software preset matching the current height within 5 mm, if any.
+    public var activeSoftwarePresetID: UUID?
+
+    /// Software preset the desk is currently travelling toward, if any.
+    public var targetSoftwarePresetID: UUID?
+
     /// Set when a movement was commanded but the desk stopped responding —
     /// either the timing watchdog saw no height change, or the desk pushed a
     /// fault on its status characteristic (E16/E26). Cleared optimistically on
@@ -68,6 +79,9 @@ public struct DeskState: Sendable {
         targetPreset = nil
         presets = (1...4).map { PresetPosition(index: $0) }
         activePreset = nil
+        softwarePresets = []
+        activeSoftwarePresetID = nil
+        targetSoftwarePresetID = nil
         needsReference = false
         faultCode = nil
         deskOffsetMM = 0
@@ -90,4 +104,14 @@ public func activePreset(height heightMM: Int, presets: [PresetPosition], isMovi
         }
         .min(by: { $0.index < $1.index })
         .map(\.index)
+}
+
+/// Returns the id of the software preset closest to `heightMM` within 5mm,
+/// or nil if moving or none matches.
+public func activeSoftwarePreset(height heightMM: Int, presets: [SoftwarePreset], isMoving: Bool) -> UUID? {
+    guard !isMoving else { return nil }
+    return presets
+        .filter { abs($0.heightMM - heightMM) <= presetMatchToleranceMM }
+        .min(by: { abs($0.heightMM - heightMM) < abs($1.heightMM - heightMM) })
+        .map(\.id)
 }

@@ -38,6 +38,7 @@ extension DeskManager {
 
         updateState {
             $0.targetPreset = index
+            $0.targetSoftwarePresetID = nil
             $0.isMoving = true
             // Optimistic: a fresh recall clears any prior stall/fault flag.
             $0.needsReference = false
@@ -46,6 +47,40 @@ extension DeskManager {
 
         try await sendPreflight()
         startPresetControlLoop(targetMM: targetMM)
+    }
+
+    // MARK: - Software preset recall (called from DeskManager.goToSoftwarePreset)
+
+    /// Moves to a software preset's stored height. Runs the identical control
+    /// loop as a hardware recall — only the target's origin differs (config
+    /// rather than desk memory).
+    func executeGoToSoftwarePreset(id: UUID) async throws {
+        FileLog.debug("executeGoToSoftwarePreset(\(id))", category: "core")
+        try await ensureConnectedForAction()
+        try await recordUserAction()
+
+        guard let preset = state.softwarePresets.first(where: { $0.id == id }) else {
+            throw DeskError.softwarePresetNotFound
+        }
+        try guardHeightInRange(preset.heightMM)
+
+        await cancelPresetMoveTask()
+        await cancelMovementTask()
+
+        // Wake the desk before sending preset commands.
+        try? await bleController.write(data: DeskCommand.wakeUp, to: DeskUUID.command, type: .withoutResponse)
+
+        updateState {
+            $0.targetPreset = nil
+            $0.targetSoftwarePresetID = id
+            $0.isMoving = true
+            // Optimistic: a fresh recall clears any prior stall/fault flag.
+            $0.needsReference = false
+            $0.faultCode = nil
+        }
+
+        try await sendPreflight()
+        startPresetControlLoop(targetMM: preset.heightMM)
     }
 
     /// Cancels the active preset move task and waits for it to drain.
@@ -148,6 +183,7 @@ extension DeskManager {
                 $0.moveDirection = nil
                 $0.speedMMS = 0
                 $0.targetPreset = nil
+                $0.targetSoftwarePresetID = nil
                 $0.needsReference = true
             }
         }
@@ -177,11 +213,17 @@ extension DeskManager {
             $0.moveDirection = nil
             $0.speedMMS = 0
             $0.targetPreset = nil
-            // Recalculate activePreset now that movement is done.
+            $0.targetSoftwarePresetID = nil
+            // Recalculate active markers now that movement is done.
             if let height = $0.heightMM {
                 $0.activePreset = activePreset(
                     height: height,
                     presets: $0.presets,
+                    isMoving: false
+                )
+                $0.activeSoftwarePresetID = activeSoftwarePreset(
+                    height: height,
+                    presets: $0.softwarePresets,
                     isMoving: false
                 )
             }

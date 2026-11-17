@@ -20,6 +20,9 @@ public enum DeskError: Error, Sendable {
     /// The requested preset slot has no height stored.
     case presetNotSet(index: Int)
 
+    /// No software preset exists for the requested identifier.
+    case softwarePresetNotFound
+
     /// The target height in mm is outside the safe command range (600...1350 mm).
     case targetOutOfRange(Int)
 

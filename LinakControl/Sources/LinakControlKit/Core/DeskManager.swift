@@ -238,6 +238,61 @@ public actor DeskManager {
         try await executeSavePreset(index: index)
     }
 
+    // MARK: - Software presets
+
+    /// Moves the desk to a software preset's stored height.
+    ///
+    /// - Throws: `DeskError.softwarePresetNotFound` for an unknown id;
+    ///   `DeskError.notConnected` if no desk is paired.
+    public func goToSoftwarePreset(id: UUID) async throws {
+        try await executeGoToSoftwarePreset(id: id)
+    }
+
+    /// Appends a software preset storing `heightMM` under `name`; persists to config.
+    /// - Returns: The created preset (callers can use its id for immediate rename).
+    @discardableResult
+    public func addSoftwarePreset(name: String, heightMM: Int) throws -> SoftwarePreset {
+        var config = try configStore.load()
+        let preset = SoftwarePreset(name: name, heightMM: heightMM)
+        config.softwarePresets.append(preset)
+        try configStore.save(config)
+        updateState { $0.softwarePresets = config.softwarePresets }
+        return preset
+    }
+
+    /// Updates fields of an existing software preset (rename and/or new
+    /// height); persists to config. No-op when the id is unknown.
+    public func updateSoftwarePreset(id: UUID, name: String? = nil, heightMM: Int? = nil) throws {
+        var config = try configStore.load()
+        guard let i = config.softwarePresets.firstIndex(where: { $0.id == id }) else { return }
+        if let name { config.softwarePresets[i].name = name }
+        if let heightMM { config.softwarePresets[i].heightMM = heightMM }
+        try configStore.save(config)
+        updateState { $0.softwarePresets = config.softwarePresets }
+    }
+
+    /// Removes a software preset by id; persists to config. Clears any
+    /// active/target marker pointing at the removed preset.
+    public func removeSoftwarePreset(id: UUID) throws {
+        var config = try configStore.load()
+        config.softwarePresets.removeAll { $0.id == id }
+        try configStore.save(config)
+        updateState {
+            $0.softwarePresets = config.softwarePresets
+            if $0.activeSoftwarePresetID == id { $0.activeSoftwarePresetID = nil }
+            if $0.targetSoftwarePresetID == id { $0.targetSoftwarePresetID = nil }
+        }
+    }
+
+    /// Moves elements within the software preset list; persists to config.
+    /// Mirrors the SwiftUI `onMove` convention (fromOffsets → toOffset).
+    public func moveSoftwarePreset(fromOffsets offsets: IndexSet, toOffset destination: Int) throws {
+        var config = try configStore.load()
+        config.softwarePresets.move(fromOffsets: offsets, toOffset: destination)
+        try configStore.save(config)
+        updateState { $0.softwarePresets = config.softwarePresets }
+    }
+
     // MARK: - Settings
 
     /// Applies updated app configuration, saving it to disk.
@@ -270,6 +325,7 @@ extension DeskManager {
             state.presets[i].heightMM = result.presetHeights.count > i ? result.presetHeights[i] : nil
             state.presets[i].label = presetLabel(index: i + 1, config: config)
         }
+        state.softwarePresets = config.softwarePresets
 
         state.heightMM = result.currentHeight
         state.connectionState = .connected
@@ -296,6 +352,11 @@ extension DeskManager {
             state.activePreset = activePreset(
                 height: height,
                 presets: state.presets,
+                isMoving: false
+            )
+            state.activeSoftwarePresetID = activeSoftwarePreset(
+                height: height,
+                presets: state.softwarePresets,
                 isMoving: false
             )
         }
@@ -475,6 +536,11 @@ extension DeskManager {
             presets: state.presets,
             isMoving: state.isMoving
         )
+        state.activeSoftwarePresetID = activeSoftwarePreset(
+            height: heightMM,
+            presets: state.softwarePresets,
+            isMoving: state.isMoving
+        )
         yieldState()
     }
 
@@ -492,6 +558,7 @@ extension DeskManager {
         for i in 0..<fresh.presets.count {
             fresh.presets[i].label = presetLabel(index: i + 1, config: config)
         }
+        fresh.softwarePresets = config.softwarePresets
         state = fresh
         yieldState()
     }
@@ -501,6 +568,7 @@ extension DeskManager {
         for i in 0..<state.presets.count {
             state.presets[i].label = presetLabel(index: i + 1, config: config)
         }
+        state.softwarePresets = config.softwarePresets
     }
 
     /// Returns the configured label for a preset slot (1-based index).

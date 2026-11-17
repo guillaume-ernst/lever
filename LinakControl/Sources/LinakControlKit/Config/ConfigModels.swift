@@ -50,6 +50,12 @@ public struct AppConfig: Codable, Equatable, Sendable {
     /// Optional labels for preset slots 1–4, e.g. ["Sitting", "Standing", nil, nil].
     public var presetLabels: [String?]
 
+    // MARK: Software Presets
+
+    /// App-side named presets beyond the desk's four hardware slots.
+    /// Ordered — the list order is the menu order.
+    public var softwarePresets: [SoftwarePreset]
+
     // MARK: Init
 
     public init(
@@ -62,7 +68,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         startAtLogin: Bool = false,
         hotkeysEnabled: Bool = false,
         showZone2: Bool = true,
-        presetLabels: [String?] = [nil, nil, nil, nil]
+        presetLabels: [String?] = [nil, nil, nil, nil],
+        softwarePresets: [SoftwarePreset] = []
     ) {
         self.pairedDeskUUID = pairedDeskUUID
         self.pairedDeskName = pairedDeskName
@@ -74,6 +81,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.hotkeysEnabled = hotkeysEnabled
         self.showZone2 = showZone2
         self.presetLabels = presetLabels
+        self.softwarePresets = softwarePresets
     }
 
     // MARK: CodingKeys — snake_case JSON per SDD schema
@@ -89,6 +97,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         case hotkeysEnabled   = "hotkeys_enabled"
         case showZone2        = "show_zone_2"
         case presetLabels     = "preset_labels"
+        case softwarePresets  = "software_presets"
 
         // Legacy keys for backward-compatible reading of old config files.
         case preset1Label     = "preset_1_label"
@@ -129,6 +138,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
                 try c.decodeIfPresent(String.self, forKey: .preset4Label),
             ]
         }
+
+        softwarePresets = try c.decodeIfPresent([SoftwarePreset].self, forKey: .softwarePresets) ?? []
     }
 
     // MARK: Encodable — write only the new format
@@ -147,12 +158,48 @@ public struct AppConfig: Codable, Equatable, Sendable {
         try c.encode(hotkeysEnabled, forKey: .hotkeysEnabled)
         try c.encode(showZone2, forKey: .showZone2)
         try c.encode(presetLabels, forKey: .presetLabels)
+        try c.encode(softwarePresets, forKey: .softwarePresets)
     }
 
     // MARK: Defaults
 
     /// Factory default — matches SDD initial values.
     public static let `default` = AppConfig()
+}
+
+// MARK: - SoftwarePreset
+
+/// A named, app-side preset position stored in config — independent of the
+/// desk's four hardware memory slots. Identified by `id`, ordered by the
+/// containing array (the config order is the menu order).
+public struct SoftwarePreset: Codable, Equatable, Sendable, Identifiable {
+    public var id: UUID
+    public var name: String
+
+    /// Raw desk-relative height in mm — same convention as hardware presets:
+    /// the display offset is applied at presentation, never stored.
+    public var heightMM: Int
+
+    public init(id: UUID = UUID(), name: String, heightMM: Int) {
+        self.id = id
+        self.name = name
+        self.heightMM = heightMM
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case heightMM = "height_mm"
+    }
+
+    /// Tolerant decode: a hand-edited entry missing `id` gets a fresh one
+    /// rather than failing the whole config load.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decodeIfPresent(UUID.self, forKey: .id)) ?? UUID()
+        name = try c.decode(String.self, forKey: .name)
+        heightMM = try c.decode(Int.self, forKey: .heightMM)
+    }
 }
 
 // MARK: - HeightUnit
