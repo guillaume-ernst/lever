@@ -42,12 +42,18 @@ public final class IPCServer: @unchecked Sendable {
     private static let maxConcurrentConnections = 8
     private let connectionSemaphore = DispatchSemaphore(value: maxConcurrentConnections)
 
+    /// Idle-read deadline applied to every accepted client socket. A client
+    /// that connects but never sends data must not hold a connection slot
+    /// (or a clientQueue thread) forever.
+    private let clientReadTimeout: TimeInterval
+
     // MARK: Init
 
-    public init(deskManager: DeskManager, configStore: ConfigStore, socketPath: String? = nil) {
+    public init(deskManager: DeskManager, configStore: ConfigStore, socketPath: String? = nil, clientReadTimeout: TimeInterval = 30) {
         self.deskManager = deskManager
         self.configStore = configStore
         self.socketPath = socketPath ?? IPCConstants.socketPath
+        self.clientReadTimeout = clientReadTimeout
     }
 
     // MARK: - Public API
@@ -198,6 +204,13 @@ public final class IPCServer: @unchecked Sendable {
             close(fd)
             connectionSemaphore.signal()
         }
+
+        // Bound each blocking read() — an idle or stalled client is dropped
+        // instead of pinning a semaphore slot indefinitely.
+        var tv = timeval()
+        tv.tv_sec = Int(clientReadTimeout)
+        tv.tv_usec = __darwin_suseconds_t((clientReadTimeout - Double(Int(clientReadTimeout))) * 1_000_000)
+        _ = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
 
         var buffer = Data()
         let chunkSize = 4096

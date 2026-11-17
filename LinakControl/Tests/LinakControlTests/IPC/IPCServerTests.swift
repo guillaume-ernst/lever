@@ -471,3 +471,87 @@ final class IPCServerStatusBuilderTests: XCTestCase {
         XCTAssertEqual(result.presets[1].label, "Stand")
     }
 }
+
+// MARK: - Idle Client Timeout Tests
+
+final class IPCServerIdleClientTests: XCTestCase {
+
+    /// Connects to the socket without sending anything and returns the fd.
+    private func connectIdle(to socketPath: String) -> Int32 {
+        let fd = socket(AF_UNIX, SOCK_STREAM, 0)
+        var addr = sockaddr_un()
+        addr.sun_family = sa_family_t(AF_UNIX)
+        withUnsafeMutablePointer(to: &addr.sun_path) { ptr in
+            socketPath.withCString { src in
+                _ = Darwin.strlcpy(
+                    UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: CChar.self),
+                    src,
+                    104
+                )
+            }
+        }
+        let result = withUnsafePointer(to: &addr) { ptr in
+            ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPtr in
+                connect(fd, sockaddrPtr, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
+        }
+        guard result == 0 else { close(fd); return -1 }
+        return fd
+    }
+
+    /// A client that connects but never sends data must be dropped after the
+    /// server's idle-read deadline — not hold a connection slot forever.
+    func testIdleClient_isDisconnectedAfterTimeout() async throws {
+        let socketPath = makeTempSocketPath()
+        let configStore = makeTempConfigStore()
+        let manager = makeDisconnectedManager(configStore: configStore)
+        let server = IPCServer(
+            deskManager: manager,
+            configStore: configStore,
+            socketPath: socketPath,
+            clientReadTimeout: 0.3
+        )
+        try server.start()
+        defer { server.stop() }
+        await waitForServer(at: socketPath)
+
+        let fd = connectIdle(to: socketPath)
+        XCTAssertGreaterThanOrEqual(fd, 0, "Idle client could not connect")
+        defer { close(fd) }
+
+        // Poll until the server closes the idle connection (client read → EOF).
+        var byte = UInt8(0)
+        var closed = false
+        let deadline = Date().addingTimeInterval(3)
+        while Date() < deadline {
+            var pfd = pollfd(fd: fd, events: Int16(POLLIN | POLLHUP), revents: 0)
+            poll(&pfd, 1, 100)
+            if pfd.revents & Int16(POLLIN | POLLHUP | POLLERR) != 0 {
+                closed = read(fd, &byte, 1) <= 0
+                if closed { break }
+            }
+        }
+        XCTAssertTrue(closed, "Server must close a client that never sends data")
+    }
+
+    /// Normal traffic must still be served — the idle timeout must not break
+    /// request/response handling on the same connection.
+    func testResponsiveClient_stillServedWithinTimeout() async throws {
+        let socketPath = makeTempSocketPath()
+        let configStore = makeTempConfigStore()
+        let manager = makeDisconnectedManager(configStore: configStore)
+        let server = IPCServer(
+            deskManager: manager,
+            configStore: configStore,
+            socketPath: socketPath,
+            clientReadTimeout: 0.5
+        )
+        try server.start()
+        defer { server.stop() }
+        await waitForServer(at: socketPath)
+
+        let request = IPCRequest(id: "idle-check", method: .getStatus, params: nil)
+        let response = try sendRequest(request, to: socketPath)
+        XCTAssertEqual(response.id, "idle-check")
+    }
+}
