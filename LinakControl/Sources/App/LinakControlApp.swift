@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // so an intermittent desk fault (E16) can be captured after the fact.
         // The banner below marks each new session; rotation at 1 MB into
         // debug.log.1 bounds growth without losing the history.
-        FileLog.debug("=== LinakControl launch ===", category: "app")
+        FileLog.debug("=== Lever launch ===", category: "app")
 
         let bleController = BLEController()
         let configStore = ConfigStore()

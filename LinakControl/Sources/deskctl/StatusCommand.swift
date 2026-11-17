@@ -31,7 +31,7 @@ struct StatusCommand: ParsableCommand {
         let heightLabel = status.heightDisplay.map { "\($0) \(status.unit)" } ?? "unknown"
         let presetsLabel = formatPresets(status.presets, active: status.activePreset, unit: status.unit)
 
-        print("LinakControl Daemon")
+        print("Lever Daemon")
         print("  Connection: \(connectionLabel)")
         print("  Desk:       \(deskLabel)")
         print("  Height:     \(heightLabel)")

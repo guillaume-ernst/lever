@@ -1,5 +1,5 @@
 // LeverScreenshotTests.swift
-// LinakControlUITests — captures documentation screenshots via XCUITest.
+// LeverUITests — captures documentation screenshots via XCUITest.
 //
 // Assumes ~/Library/Application Support/LinakControl/config.json has a valid
 // paired_desk_uuid and that the desk is powered on and reachable. No demo BLE

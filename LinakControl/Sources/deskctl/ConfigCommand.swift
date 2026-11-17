@@ -8,7 +8,7 @@ import LinakControlKit
 struct ConfigCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "config",
-        abstract: "Manage LinakControl configuration.",
+        abstract: "Manage Lever configuration.",
         subcommands: [
             ConfigShowCommand.self,
             ConfigResetCommand.self,

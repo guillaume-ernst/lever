@@ -9,7 +9,7 @@ import LinakControlKit
 struct ServiceCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "service",
-        abstract: "Manage the LinakControl daemon.",
+        abstract: "Manage the Lever daemon.",
         subcommands: [
             ServiceStatusCommand.self,
             ServiceStopCommand.self,
@@ -47,7 +47,7 @@ struct ServiceStatusCommand: ParsableCommand {
 struct ServiceStopCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "stop",
-        abstract: "Stop the LinakControl daemon."
+        abstract: "Stop the Lever daemon."
     )
 
     func run() throws {
@@ -78,7 +78,7 @@ struct ServiceStopCommand: ParsableCommand {
         task.waitUntilExit()
         let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
         for line in output.components(separatedBy: "\n") {
-            if line.contains("LinakControl") && !line.contains("deskctl") {
+            if line.contains("Lever") && !line.contains("deskctl") {
                 let parts = line.trimmingCharacters(in: .whitespaces).components(separatedBy: .whitespaces)
                 if let pidStr = parts.first, let pid = pid_t(pidStr) {
                     return pid
@@ -99,9 +99,9 @@ struct ServiceInstallCommand: ParsableCommand {
 
     func run() throws {
         print("""
-        To start LinakControl automatically at login:
+        To start Lever automatically at login:
 
-          1. Open LinakControl.app
+          1. Open Lever.app
           2. Click the menu bar icon
           3. Open Settings
           4. Enable "Start at Login"
