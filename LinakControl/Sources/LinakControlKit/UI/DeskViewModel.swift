@@ -345,7 +345,7 @@ public final class DeskViewModel: ObservableObject {
         persistConfig { $0.hotkeysEnabled = enabled }
     }
 
-    /// Updates the Zone 2 visibility setting and persists to config.
+    /// Updates the menu bar readout visibility setting and persists to config.
     public func updateShowZone2(_ visible: Bool) {
         showZone2 = visible
         persistConfig { $0.showZone2 = visible }

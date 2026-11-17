@@ -165,8 +165,9 @@ app has one window size, and it is small.
 - Presets lay out in a **2×2 cell grid**, max-width cells, 8 pt padding.
 - Settings is a scrolled column of labeled rows with plain-text section
   headers (secondary, subheadline semibold).
-- The menu bar holds two status items: the desk icon (opens popover) and
-  a text zone showing `preset + height` — e.g. `1  70.9 cm`.
+- The menu bar holds a **single status item**: the bare height number
+  (unit implied) — e.g. `70.9`. Left-click drops the preset menu,
+  right-click opens the popover.
 - Disconnected cells dim to 40 % opacity rather than hiding — the layout
   never jumps.
 
@@ -203,8 +204,8 @@ ease-in-out loop — the interface's only recurring animation.
 **Empty slot ("+ Add"):** an unconfigured slot is an invitation, not a dead
 cell — the number stays (dimmed to 65 %, one shade above the 40 %
 disconnected dim) and the height caption becomes "+ Add" in accent.
-Double-tapping saves the current height into the slot; the Zone-2 menu
-item mirrors it ("4  + Add"). Empty is a state, never a void.
+Double-tapping saves the current height into the slot; the menu-bar
+preset item mirrors it ("4  + Add"). Empty is a state, never a void.
 
 ### Movement buttons
 Standard `.bordered` buttons, minimum width 64 pt, SF Symbol chevrons
@@ -218,12 +219,15 @@ Orange tint (12 %) rounded rectangle (8 pt), leading
 Appears inside the popover at the top on stand-down; its menu-bar twin is
 the self-colored orange warning triangle replacing the desk icon.
 
-### Menu bar zones
-- **Zone 1 — icon:** `table.furniture` template symbol; 70 % alpha when
-  disconnected; replaced by the non-template orange warning triangle on
-  fault.
-- **Zone 2 — readout:** plain status text, `preset  height` when a preset
-  is active, or `Connecting…` / `Scanning…` / `Not Connected`.
+### Menu bar item
+- **Readout:** the bare height number, no unit — `114.4`. `…` while
+  connecting/scanning, `—` disconnected. Left-click drops the preset menu,
+  right-click opens the popover; the tooltip names both gestures.
+- **Fault:** the non-template orange warning triangle appears left of the
+  readout; the tooltip carries the cause.
+- **Readout hidden:** with "Show height in menu bar" off, the item falls
+  back to the `table.furniture` template icon (70 % alpha disconnected);
+  both gestures still work.
 
 ### Segmented controls & inputs
 System `Picker` segmented style for unit/movement-mode choices; standard

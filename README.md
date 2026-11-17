@@ -8,7 +8,7 @@ macOS menu bar app and CLI for controlling LINAK DPG1C standing desks via Blueto
 
 ## Features
 
-- **Menu bar app** with two zones: desk icon (popover) and height/preset text (dropdown)
+- **Menu bar app** with a single status item: the bare height number — left-click for the preset menu, right-click for the control popover
 - **Preset recall**: 4 saved height positions, switchable from the popover, menu bar dropdown, or `deskctl preset N`
 - **Manual movement**: hold-to-move up/down buttons, or auto-run mode (tap to start/stop)
 - **Live height display**: real-time height with configurable desk offset
@@ -34,13 +34,13 @@ On first launch, the app scans for nearby LINAK desks. Select your desk to pair.
 
 ## Screenshots
 
-Both menu bar zones in context:
+The menu bar status item in context:
 
 <p align="center">
-  <img src="docs/screenshots/menubar.png" alt="Menu bar zones">
+  <img src="docs/screenshots/menubar.png" alt="Menu bar item">
 </p>
 
-Popover (zone 1) and preset menu (zone 2):
+Control popover (right-click) and preset menu (left-click):
 
 <p align="center">
   <img src="docs/screenshots/menubar-popover.png" alt="Menu bar popover" width="320">

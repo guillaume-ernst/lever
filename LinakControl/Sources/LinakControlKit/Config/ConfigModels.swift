@@ -42,7 +42,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     /// Enable global keyboard shortcuts. Defaults to false.
     public var hotkeysEnabled: Bool
 
-    /// Show the Zone 2 status item (preset dropdown in menu bar). Defaults to true.
+    /// Show the height readout in the menu bar status item. Defaults to true.
     public var showZone2: Bool
 
     // MARK: Preset Labels

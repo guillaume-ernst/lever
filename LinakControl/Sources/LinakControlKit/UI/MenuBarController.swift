@@ -1,5 +1,5 @@
 // MenuBarController.swift
-// LinakControlKit — Two-zone NSStatusItem controller per ADR-6.
+// LinakControlKit — Single NSStatusItem: height readout + dual-click gestures.
 
 import AppKit
 import Combine
@@ -7,22 +7,22 @@ import SwiftUI
 
 // MARK: - MenuBarController
 
-/// Owns the two NSStatusItems in the macOS menu bar.
+/// Owns the single NSStatusItem in the macOS menu bar.
 ///
-/// Zone 1: desk icon that toggles an NSPopover containing `PopoverView`.
-/// Zone 2: preset + height text that shows an `NSMenu` with four preset items.
+/// The item shows the current desk height (bare number, unit implied).
+/// Left-click drops the preset `NSMenu`; right-click opens the `NSPopover`
+/// containing `PopoverView`.
 ///
-/// Observes `DeskViewModel` to update both zones reactively.
+/// Observes `DeskViewModel` to update the readout reactively.
 @MainActor
 public final class MenuBarController: NSObject {
 
     // MARK: - Private state
 
-    private var zone1StatusItem: NSStatusItem?
-    private var zone2StatusItem: NSStatusItem?
+    private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private let viewModel: DeskViewModel
-    private var lastZone2Title: String = ""
+    private var lastTitle: String = ""
     private var cancellable: AnyCancellable?
 
     // MARK: - Init
@@ -34,16 +34,15 @@ public final class MenuBarController: NSObject {
 
     // MARK: - Public API
 
-    /// Creates both NSStatusItems and connects them to the view model.
+    /// Creates the status item and connects it to the view model.
     ///
     /// When `autoOpen` is true the popover opens immediately after setup,
     /// which is useful for first-run pairing so the user sees the scanning UI
-    /// without having to find and click the (dimmed) menu-bar icon first.
+    /// without having to find and right-click the menu-bar item first.
     public func setup(autoOpen: Bool = false) {
         FileLog.debug("setup(autoOpen: \(autoOpen)) isFirstRun=\(viewModel.isFirstRun)", category: "ui")
-        // Zone 2 first — macOS places the first-created status item rightmost.
-        setupZone2()
-        setupZone1()
+        setupStatusItem()
+        setupPopover()
         startObservingViewModel()
 
         if autoOpen {
@@ -54,19 +53,29 @@ public final class MenuBarController: NSObject {
         }
     }
 
-    // MARK: - Zone 1: desk icon → popover
+    // MARK: - Status item
 
-    private func setupZone1() {
-        FileLog.debug("setupZone1: creating square-length status item", category: "ui")
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = zone1Image(for: viewModel.connectionState)
-        item.button?.image?.isTemplate = true
-        item.button?.alphaValue = viewModel.connectionState == .connected ? 1.0 : 0.7
-        item.button?.action = #selector(togglePopover)
+    private func setupStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        // Both buttons land in the same action; NSApp.currentEvent discriminates.
+        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        item.button?.action = #selector(statusItemClicked)
         item.button?.target = self
-        item.button?.setAccessibilityIdentifier("linak.menubar.zone1.icon")
-        zone1StatusItem = item
+        item.button?.setAccessibilityIdentifier("linak.menubar.item")
+        statusItem = item
+        updateStatusItem()
+    }
 
+    /// Left-click shows the preset menu; right-click toggles the control popover.
+    @objc private func statusItemClicked() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            togglePopover()
+        } else {
+            showPresetMenu()
+        }
+    }
+
+    private func setupPopover() {
         let hosting = NSPopover()
         hosting.contentViewController = NSHostingController(
             rootView: PopoverView(viewModel: viewModel)
@@ -78,8 +87,8 @@ public final class MenuBarController: NSObject {
         popover = hosting
     }
 
-    @objc private func togglePopover() {
-        guard let button = zone1StatusItem?.button else { return }
+    private func togglePopover() {
+        guard let button = statusItem?.button else { return }
         if let popover, popover.isShown {
             popover.performClose(nil)
         } else {
@@ -90,23 +99,14 @@ public final class MenuBarController: NSObject {
         }
     }
 
-    // MARK: - Zone 2: preset text → dropdown menu
-
-    private func setupZone2() {
-        FileLog.debug("setupZone2: creating variable-length status item", category: "ui")
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = zone2Title()
-        item.button?.action = #selector(showPresetMenu)
-        item.button?.target = self
-        item.button?.setAccessibilityIdentifier("linak.menubar.zone2.text")
-        zone2StatusItem = item
-    }
-
-    @objc private func showPresetMenu() {
-        let menu = buildPresetMenu()
-        zone2StatusItem?.menu = menu
-        zone2StatusItem?.button?.performClick(nil)
-        zone2StatusItem?.menu = nil
+    private func showPresetMenu() {
+        guard let item = statusItem else { return }
+        // Assigning .menu then simulating a click pops the menu anchored to
+        // the item; clearing it right after keeps right-click free for the
+        // popover and left-clicks routed through statusItemClicked().
+        item.menu = buildPresetMenu()
+        item.button?.performClick(nil)
+        item.menu = nil
     }
 
     // MARK: - View model observation
@@ -116,27 +116,24 @@ public final class MenuBarController: NSObject {
         // refresh on the next main-queue cycle to read updated values.
         cancellable = viewModel.objectWillChange.sink { [weak self] _ in
             DispatchQueue.main.async { [weak self] in
-                self?.refreshZones()
+                self?.refreshStatusItem()
             }
         }
     }
 
-    private func refreshZones() {
-        updateZone1Icon()
-        updateZone2Visibility()
-        updateZone2Title()
+    private func refreshStatusItem() {
+        updateStatusItem()
         updatePopoverBehavior()
     }
 
-    private func updateZone1Icon() {
-        guard let button = zone1StatusItem?.button else { return }
+    private func updateStatusItem() {
+        guard let button = statusItem?.button else { return }
         button.alphaValue = 1.0
 
         if viewModel.needsReference {
-            // Persistent fault indicator — visible without opening the popover or
-            // catching the one-shot notification. Hover shows the specific cause.
-            // Use a self-coloured (non-template) orange symbol so it renders
-            // regardless of the status-bar tint.
+            // Persistent fault indicator — visible without opening the popover
+            // or catching the one-shot notification. Self-coloured (non-template)
+            // orange so it renders regardless of the status-bar tint.
             let config = NSImage.SymbolConfiguration(paletteColors: [.systemOrange])
             let warning = NSImage(
                 systemSymbolName: "exclamationmark.triangle.fill",
@@ -144,36 +141,23 @@ public final class MenuBarController: NSObject {
             )?.withSymbolConfiguration(config)
             warning?.isTemplate = false
             button.image = warning
-            button.contentTintColor = nil
             button.toolTip = viewModel.faultMessage
+        } else if viewModel.showZone2 {
+            button.image = nil
+            button.toolTip = "Left-click: presets · Right-click: desk controls"
         } else {
-            button.image = zone1Image(for: viewModel.connectionState)
-            button.contentTintColor = nil
+            // Readout hidden by preference — fall back to the bare desk icon.
+            button.image = NSImage(systemSymbolName: "table.furniture", accessibilityDescription: "Desk")
+            button.image?.isTemplate = true
             button.alphaValue = viewModel.connectionState == .connected ? 1.0 : 0.7
-            button.toolTip = nil
+            button.toolTip = "Left-click: presets · Right-click: desk controls"
         }
-    }
 
-    private func updateZone2Visibility() {
-        guard let item = zone2StatusItem else { return }
-        if viewModel.showZone2 {
-            item.length = NSStatusItem.variableLength
-            item.button?.action = #selector(showPresetMenu)
-            // Title is set by updateZone2Title() — no duplicate here.
-        } else {
-            item.length = 0
-            item.button?.title = ""
-            item.button?.action = nil
-            lastZone2Title = ""
-        }
-    }
-
-    private func updateZone2Title() {
-        guard viewModel.showZone2 else { return }
-        let title = zone2Title()
-        guard title != lastZone2Title else { return }
-        lastZone2Title = title
-        zone2StatusItem?.button?.title = title
+        button.imagePosition = viewModel.showZone2 ? .imageLeft : .imageOnly
+        let title = viewModel.showZone2 ? titleText() : ""
+        guard title != lastTitle else { return }
+        lastTitle = title
+        button.title = title
     }
 
     private func updatePopoverBehavior() {
@@ -184,36 +168,37 @@ public final class MenuBarController: NSObject {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Readout
 
-    private func zone1Image(for state: ConnectionState) -> NSImage? {
-        // "table.furniture" is available on macOS 13+ and resembles a desk.
-        let name = "table.furniture"
-        return NSImage(systemSymbolName: name, accessibilityDescription: "Desk")
-    }
-
-    private func zone2Title() -> String {
+    /// The bare height number (no unit) — "114.4". Shows "…" while a state
+    /// transition is in flight and "—" when no height is known.
+    private func titleText() -> String {
         switch viewModel.connectionState {
         case .connected:
-            let heightText = viewModel.heightDisplay
-            if let active = viewModel.activePreset {
-                return "\(active)  \(heightText)"
-            }
-            return heightText
-        case .connecting:
-            return "Connecting…"
-        case .scanning:
-            return "Scanning…"
+            guard let mm = viewModel.heightMM else { return "—" }
+            return HeightConverter.value(mm: mm + viewModel.deskOffsetMM, unit: viewModel.unit)
+        case .connecting, .scanning:
+            return "…"
         case .disconnected:
-            return "Not Connected"
+            return "—"
         }
     }
+
+    // MARK: - Preset menu
 
     private func buildPresetMenu() -> NSMenu {
         let menu = NSMenu()
         for preset in viewModel.presets {
             menu.addItem(presetMenuItem(for: preset))
         }
+        menu.addItem(.separator())
+        let settings = NSMenuItem(
+            title: "Settings…",
+            action: #selector(settingsMenuItemSelected),
+            keyEquivalent: ""
+        )
+        settings.target = self
+        menu.addItem(settings)
         return menu
     }
 
@@ -235,6 +220,14 @@ public final class MenuBarController: NSObject {
             viewModel.savePreset(index: sender.tag)
         } else {
             viewModel.goToPreset(index: sender.tag)
+        }
+    }
+
+    @objc private func settingsMenuItemSelected() {
+        // The popover hosts the settings gear — open it so the user can reach
+        // Settings without discovering the right-click gesture.
+        if popover?.isShown == false {
+            togglePopover()
         }
     }
 }

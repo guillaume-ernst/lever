@@ -142,9 +142,9 @@
     {
       "name": "Menu Bar Readout",
       "kind": "nav",
-      "refersTo": "menu-bar-zone2",
-      "description": "Zone-2 status text in the menu bar — active preset + live height, or a state string.",
-      "html": "<span class=\"ds-menubar\">1&nbsp;&nbsp;70.9 cm</span>",
+      "refersTo": "menu-bar-item",
+      "description": "The single menu bar item — the bare height number (unit implied). Left-click: preset menu; right-click: control popover.",
+      "html": "<span class=\"ds-menubar\">114.4</span>",
       "css": ".ds-menubar { font: 400 13px -apple-system, sans-serif; color: #1D1D1F; letter-spacing: 0em; }"
     },
     {

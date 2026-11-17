@@ -1,11 +1,11 @@
 // PopoverView.swift
-// LinakControlKit — Root SwiftUI view hosted in the Zone 1 NSPopover.
+// LinakControlKit — Root SwiftUI view hosted in the menu bar NSPopover.
 
 import SwiftUI
 
 // MARK: - PopoverView
 
-/// Root view for the Zone 1 NSPopover (280 pt wide, ~400 pt tall).
+/// Root view for the menu bar NSPopover (280 pt wide, ~400 pt tall).
 ///
 /// Renders different content depending on `viewModel.connectionState`:
 /// - `.connected`: hero height + controls + presets

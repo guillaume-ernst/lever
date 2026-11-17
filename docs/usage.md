@@ -6,12 +6,14 @@ Operate Lever after install and pairing: menu bar interactions, common sit/stand
 
 Lever has two front ends. They share the same paired desk and the same configuration file, so you can mix them freely.
 
-**Menu bar app — two zones**
+**Menu bar app — one item, two gestures**
 
-After launching `Lever.app`, the menu bar shows two separate items (Zone 2 is created first so macOS places Zone 1 to its left):
+After launching `Lever.app`, the menu bar shows a single item: the current desk height as a bare number (e.g. `114.4` — the unit is your configured one).
 
-- **Zone 1 — desk icon.** Click to toggle the popover. The popover shows the current height, manual up/down controls, and a 2×2 preset grid. It dims when the desk is disconnected.
-- **Zone 2 — height/preset text.** Click to open a dropdown listing the four presets and their stored heights; pick one to move there.
+- **Left-click — preset menu.** A dropdown listing the four presets and their stored heights; pick one to move there. An empty slot shows `+ Add` and saves the current height when selected. The menu ends with `Settings…`, which opens the popover.
+- **Right-click — control popover.** The full instrument: live height, manual up/down controls, the 2×2 preset grid, and the settings gear.
+- **Fault state.** On a desk fault the item gains an orange warning triangle; hover it for the cause.
+- Hiding the readout ("Show height in menu bar" off in Settings) falls back to a plain desk icon; both gestures keep working.
 
 **CLI — `deskctl`**
 

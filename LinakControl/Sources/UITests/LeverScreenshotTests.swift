@@ -39,42 +39,40 @@ final class LeverScreenshotTests: XCTestCase {
     }
 
     func test_screenshot_menubar() throws {
-        let zone1 = resolveZone1()
-        let zone2 = resolveZone2()
-        XCTAssertTrue(zone1.waitForExistence(timeout: 10), "zone1 not findable")
-        XCTAssertTrue(zone2.waitForExistence(timeout: 10), "zone2 not findable")
+        let item = resolveStatusItem()
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "status item not findable")
 
         // Make sure nothing from a prior test is still on screen.
         app.typeKey(.escape, modifierFlags: [])
         Thread.sleep(forTimeInterval: 0.3)
 
-        let zone1Frame = zone1.frame
-        let zone2Frame = zone2.frame
+        let itemFrame = item.frame
 
         let crop = CGRect(
-            x: max(0, zone1Frame.minX - 10),
+            x: max(0, itemFrame.minX - 10),
             y: 0,
-            width: (zone2Frame.maxX - zone1Frame.minX) + 20,
-            height: max(zone1Frame.maxY, 30)
+            width: itemFrame.width + 20,
+            height: max(itemFrame.maxY, 30)
         )
         attach(name: "menubar",
                image: cropFullScreen(to: crop) ?? XCUIScreen.main.screenshot().image)
     }
 
     func test_screenshot_menubar_popover() throws {
-        let zone1 = resolveZone1()
-        XCTAssertTrue(zone1.waitForExistence(timeout: 10), "zone1 status item not findable")
-        let zone1Frame = zone1.frame
+        let item = resolveStatusItem()
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "status item not findable")
+        let itemFrame = item.frame
 
         app.typeKey(.escape, modifierFlags: [])
         Thread.sleep(forTimeInterval: 0.3)
 
-        zone1.click()
+        // Right-click opens the control popover (left-click drops the preset menu).
+        item.rightClick()
         Thread.sleep(forTimeInterval: 0.6)
 
         let crop = CGRect(
-            x: zone1Frame.midX - 150,
-            y: zone1Frame.minY,
+            x: itemFrame.midX - 150,
+            y: itemFrame.minY,
             width: 340,
             height: 380
         )
@@ -85,26 +83,26 @@ final class LeverScreenshotTests: XCTestCase {
     }
 
     func test_screenshot_preset_menu() throws {
-        let zone2 = resolveZone2()
+        let item = resolveStatusItem()
         XCTAssertTrue(
-            zone2.waitForExistence(timeout: 10),
-            "zone2 status item not findable — is zone 2 visible in the menu bar?"
+            item.waitForExistence(timeout: 10),
+            "status item not findable"
         )
-        let zone2Frame = zone2.frame
+        let itemFrame = item.frame
 
         app.typeKey(.escape, modifierFlags: [])
         Thread.sleep(forTimeInterval: 0.3)
 
-        zone2.click()
+        item.click()
         Thread.sleep(forTimeInterval: 0.4)
 
         // app.menuItems unions NSApp menu-bar items (huge bounds), so we crop
-        // from zone2 directly. The dropdown hangs straight below the icon.
+        // from the status item directly. The dropdown hangs straight below it.
         let crop = CGRect(
-            x: max(0, zone2Frame.midX - 80),
-            y: zone2Frame.maxY,
+            x: max(0, itemFrame.midX - 80),
+            y: itemFrame.maxY,
             width: 160,
-            height: 110
+            height: 150
         )
         attach(name: "menubar-preset-menu",
                image: cropFullScreen(to: crop) ?? XCUIScreen.main.screenshot().image)
@@ -113,14 +111,14 @@ final class LeverScreenshotTests: XCTestCase {
     }
 
     func test_screenshot_settings() throws {
-        let zone1 = resolveZone1()
-        XCTAssertTrue(zone1.waitForExistence(timeout: 10), "zone1 status item not findable")
-        let zone1Frame = zone1.frame
+        let item = resolveStatusItem()
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "status item not findable")
+        let itemFrame = item.frame
 
         app.typeKey(.escape, modifierFlags: [])
         Thread.sleep(forTimeInterval: 0.3)
 
-        zone1.click()
+        item.rightClick()
         Thread.sleep(forTimeInterval: 0.6)
 
         let gear = app.buttons["linak.popover.settings.gear"]
@@ -132,8 +130,8 @@ final class LeverScreenshotTests: XCTestCase {
         // icons (Dropbox, language flag) and the desktop wallpaper sliver out
         // of the upper-right corner.
         let crop = CGRect(
-            x: zone1Frame.midX - 150,
-            y: zone1Frame.minY,
+            x: itemFrame.midX - 150,
+            y: itemFrame.minY,
             width: 300,
             height: 380
         )
@@ -144,14 +142,14 @@ final class LeverScreenshotTests: XCTestCase {
     }
 
     func test_screenshot_settings_scrolled() throws {
-        let zone1 = resolveZone1()
-        XCTAssertTrue(zone1.waitForExistence(timeout: 10), "zone1 status item not findable")
-        let zone1Frame = zone1.frame
+        let item = resolveStatusItem()
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "status item not findable")
+        let itemFrame = item.frame
 
         app.typeKey(.escape, modifierFlags: [])
         Thread.sleep(forTimeInterval: 0.3)
 
-        zone1.click()
+        item.rightClick()
         Thread.sleep(forTimeInterval: 0.6)
 
         let gear = app.buttons["linak.popover.settings.gear"]
@@ -171,8 +169,8 @@ final class LeverScreenshotTests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.4)
 
         let crop = CGRect(
-            x: zone1Frame.midX - 150,
-            y: zone1Frame.minY,
+            x: itemFrame.midX - 150,
+            y: itemFrame.minY,
             width: 300,
             height: 380
         )
@@ -183,7 +181,7 @@ final class LeverScreenshotTests: XCTestCase {
     }
 
     /// Settings view persists `viewModel.showSettings = true` even after the
-    /// popover is dismissed, which would make the next zone1 click open the
+    /// popover is dismissed, which would make the next right-click open the
     /// popover directly on the settings screen. Press Back first, then escape.
     private func dismissPopoverFromSettings() {
         let back = app.buttons["linak.settings.back"]
@@ -222,36 +220,25 @@ final class LeverScreenshotTests: XCTestCase {
     // MARK: - Element lookup
 
     /// Prefer the a11y identifier; if absent (e.g. older installed build), fall
-    /// back to scanning all visible status items for one whose label/value looks
-    /// like our icon (no text, image-only).
-    private func resolveZone1() -> XCUIElement {
-        let byIdentifier = app.statusItems["linak.menubar.zone1.icon"]
+    /// back to the legacy two-zone identifiers, then to scanning for a status
+    /// item whose title looks like our height readout or desk icon.
+    private func resolveStatusItem() -> XCUIElement {
+        let byIdentifier = app.statusItems["linak.menubar.item"]
         if byIdentifier.exists { return byIdentifier }
-        // Fallback: zone1 is square-length with no text — pick the first
-        // status item with empty title that we can click.
-        for i in 0..<app.statusItems.count {
-            let item = app.statusItems.element(boundBy: i)
-            if item.label.isEmpty && (item.value as? String ?? "").isEmpty {
-                return item
-            }
+        // Legacy identifiers from the two-zone era.
+        for legacyId in ["linak.menubar.zone2.text", "linak.menubar.zone1.icon"] {
+            let legacy = app.statusItems[legacyId]
+            if legacy.exists { return legacy }
         }
-        return byIdentifier
-    }
-
-    /// Prefer the a11y identifier; if absent, fall back to scanning for a
-    /// status item whose title looks like our zone 2 text (height / state).
-    private func resolveZone2() -> XCUIElement {
-        let byIdentifier = app.statusItems["linak.menubar.zone2.text"]
-        if byIdentifier.exists { return byIdentifier }
-        let knownPrefixes = ["Connecting", "Scanning", "Not Connected"]
+        // Fallback: pick a status item whose title contains a digit (the
+        // height readout) or is image-only (icon fallback mode).
         for i in 0..<app.statusItems.count {
             let item = app.statusItems.element(boundBy: i)
             let title = (item.value as? String) ?? item.label
-            if title.isEmpty { continue }
             if title.unicodeScalars.contains(where: { CharacterSet.decimalDigits.contains($0) }) {
                 return item
             }
-            if knownPrefixes.contains(where: { title.hasPrefix($0) }) {
+            if item.label.isEmpty && (item.value as? String ?? "").isEmpty {
                 return item
             }
         }

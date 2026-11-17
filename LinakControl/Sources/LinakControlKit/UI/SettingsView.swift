@@ -8,7 +8,7 @@ import SwiftUI
 
 // MARK: - SettingsView
 
-/// Full settings panel displayed inside the Zone 1 popover.
+/// Full settings panel displayed inside the menu bar popover.
 ///
 /// Navigation is simulated: a Back button sets `viewModel.showSettings = false`,
 /// returning to the normal popover content.
@@ -347,7 +347,7 @@ private struct SystemSection: View {
                 set: { viewModel.updateHotkeysEnabled($0) }
             ))
 
-            Toggle("Show preset bar", isOn: Binding(
+            Toggle("Show height in menu bar", isOn: Binding(
                 get: { viewModel.showZone2 },
                 set: { viewModel.updateShowZone2($0) }
             ))
