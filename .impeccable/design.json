@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T00:00:00Z",
+  "title": "Design System: Lever",
+  "extensions": {
+    "colorMeta": {
+      "system-accent": {
+        "role": "primary",
+        "displayName": "System Accent",
+        "canonical": "Color.accentColor (dynamic; #007AFF light / #0A84FF dark canonical)",
+        "tonalRamp": ["oklch(25% 0.09 260)", "oklch(35% 0.13 260)", "oklch(45% 0.18 260)", "oklch(55% 0.22 258)", "oklch(65% 0.20 255)", "oklch(75% 0.14 255)", "oklch(85% 0.08 258)", "oklch(95% 0.03 260)"]
+      },
+      "fault-orange": {
+        "role": "secondary",
+        "displayName": "Fault Orange",
+        "canonical": "Color.orange / NSColor.systemOrange (#FF9500 light)",
+        "tonalRamp": ["oklch(30% 0.08 70)", "oklch(40% 0.11 68)", "oklch(50% 0.15 66)", "oklch(62% 0.18 65)", "oklch(72% 0.18 68)", "oklch(82% 0.13 72)", "oklch(90% 0.08 75)", "oklch(96% 0.03 78)"]
+      },
+      "success-green": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "canonical": "Color.green (#28CD41 light)",
+        "tonalRamp": ["oklch(28% 0.07 150)", "oklch(38% 0.11 148)", "oklch(48% 0.15 146)", "oklch(58% 0.19 144)", "oklch(68% 0.20 142)", "oklch(78% 0.16 144)", "oklch(88% 0.10 146)", "oklch(96% 0.04 148)"]
+      },
+      "destructive-red": {
+        "role": "tertiary",
+        "displayName": "Destructive Red",
+        "canonical": "Color.red (#FF3B30 light)",
+        "tonalRamp": ["oklch(28% 0.08 28)", "oklch(38% 0.12 28)", "oklch(48% 0.17 28)", "oklch(58% 0.21 28)", "oklch(68% 0.19 30)", "oklch(78% 0.14 32)", "oklch(88% 0.08 34)", "oklch(96% 0.03 36)"]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Text",
+        "canonical": "Color.secondary / NSColor.secondaryLabelColor (#6E6E73 light)",
+        "tonalRamp": ["oklch(20% 0.005 260)", "oklch(30% 0.005 260)", "oklch(42% 0.008 260)", "oklch(54% 0.008 260)", "oklch(66% 0.008 260)", "oklch(78% 0.006 260)", "oklch(88% 0.004 260)", "oklch(96% 0.002 260)"]
+      },
+      "surface-control": {
+        "role": "neutral",
+        "displayName": "Control Surface",
+        "canonical": "NSColor.controlBackgroundColor (#FFFFFF light / #1E1E1E dark)",
+        "tonalRamp": ["oklch(18% 0.004 260)", "oklch(26% 0.004 260)", "oklch(36% 0.005 260)", "oklch(50% 0.006 260)", "oklch(68% 0.005 260)", "oklch(82% 0.004 260)", "oklch(92% 0.003 260)", "oklch(99% 0.001 260)"]
+      },
+      "warning-tint": {
+        "role": "neutral",
+        "displayName": "Warning Tint",
+        "canonical": "Color.orange.opacity(0.12)",
+        "tonalRamp": ["oklch(30% 0.06 70)", "oklch(42% 0.08 70)", "oklch(55% 0.10 70)", "oklch(66% 0.11 72)", "oklch(76% 0.10 74)", "oklch(85% 0.08 76)", "oklch(92% 0.05 78)", "oklch(97% 0.02 80)"]
+      },
+      "active-tint": {
+        "role": "neutral",
+        "displayName": "Active Tint",
+        "canonical": "Color.accentColor.opacity(0.15)",
+        "tonalRamp": ["oklch(30% 0.07 260)", "oklch(42% 0.09 260)", "oklch(55% 0.11 260)", "oklch(66% 0.12 259)", "oklch(76% 0.10 258)", "oklch(85% 0.07 258)", "oklch(92% 0.04 259)", "oklch(97% 0.02 260)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Rounded Readout", "purpose": "Live desk height only — SF Pro Rounded 36pt bold. The one expressive type moment in the app." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles, preset slot numbers, popover headers." },
+      "title": { "displayName": "Title", "purpose": "First-run screen headings (.title2 semibold)." },
+      "body": { "displayName": "Body", "purpose": "Settings labels, values, menu content." },
+      "label": { "displayName": "Caption", "purpose": "Hints, helper lines, status strings (.caption/.caption2)." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "preset-pulse", "value": "ease-in-out 0.6s infinite alternate", "purpose": "Opacity oscillation on a preset cell while the desk is moving toward it. The interface's only recurring animation." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Preset Cell (inactive)",
+      "kind": "chip",
+      "refersTo": "preset-cell",
+      "description": "One of four hardware preset slots — control-gray rounded rect, accent slot number, secondary height caption.",
+      "html": "<div class=\"ds-preset-cell\"><span class=\"ds-preset-num\">1</span><span class=\"ds-preset-h\">70.9 cm</span></div>",
+      "css": ".ds-preset-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 96px; padding: 8px; background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; box-shadow: 0 0.5px 1px rgba(0,0,0,0.06); font-family: -apple-system, sans-serif; } .ds-preset-num { font-size: 13px; font-weight: 600; color: #007AFF; } .ds-preset-h { font-size: 10px; color: #6E6E73; }"
+    },
+    {
+      "name": "Preset Cell (active)",
+      "kind": "chip",
+      "refersTo": "preset-cell-active",
+      "description": "The slot the desk currently sits at — accent tint (15%) plus a 2pt accent ring.",
+      "html": "<div class=\"ds-preset-cell ds-preset-cell--active\"><span class=\"ds-preset-num\">1</span><span class=\"ds-preset-h\">70.9 cm</span></div>",
+      "css": ".ds-preset-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 96px; padding: 8px; border-radius: 8px; font-family: -apple-system, sans-serif; } .ds-preset-cell--active { background: rgba(0,122,255,0.15); border: 2px solid #007AFF; } .ds-preset-num { font-size: 13px; font-weight: 600; color: #007AFF; } .ds-preset-h { font-size: 10px; color: #6E6E73; }"
+    },
+    {
+      "name": "Warning Banner",
+      "kind": "custom",
+      "refersTo": "warning-banner",
+      "description": "Stand-down notice shown at the top of the popover when the desk reports a fault — orange tint, triangle icon, secondary message.",
+      "html": "<div class=\"ds-warn\"><svg class=\"ds-warn-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\"><path d=\"M7 1.2 13 12H1L7 1.2Z\" fill=\"#FF9500\"/><rect x=\"6.3\" y=\"4.6\" width=\"1.4\" height=\"4\" rx=\"0.7\" fill=\"#fff\"/><circle cx=\"7\" cy=\"10.2\" r=\"0.9\" fill=\"#fff\"/></svg><span class=\"ds-warn-text\">Desk needs initialisation — hold DOWN on the control box.</span></div>",
+      "css": ".ds-warn { display: flex; align-items: center; gap: 8px; padding: 8px; background: rgba(255,149,0,0.12); border-radius: 8px; font-family: -apple-system, sans-serif; } .ds-warn-text { font-size: 10px; line-height: 1.35; color: #6E6E73; }"
+    },
+    {
+      "name": "Bordered Button",
+      "kind": "button",
+      "refersTo": "button-bordered",
+      "description": "Standard macOS bordered button — the movement controls (min 64pt), Apply, and most actions.",
+      "html": "<button class=\"ds-btn\">▲</button>",
+      "css": ".ds-btn { min-width: 64px; padding: 4px 12px; background: #FFFFFF; color: #007AFF; font: 400 13px -apple-system, sans-serif; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.08); cursor: default; transition: background 0.15s ease; } .ds-btn:hover { background: #F5F5F7; } .ds-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,122,255,0.3); } .ds-btn:active { background: #ECECEE; }"
+    },
+    {
+      "name": "Prominent Button",
+      "kind": "button",
+      "refersTo": "button-bordered",
+      "description": "borderedProminent — the primary action of a surface (Connect, Retry). Accent-filled, white label.",
+      "html": "<button class=\"ds-btn-prom\">Connect</button>",
+      "css": ".ds-btn-prom { min-width: 64px; padding: 4px 12px; background: #007AFF; color: #FFFFFF; font: 400 13px -apple-system, sans-serif; border: none; border-radius: 8px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.15); cursor: default; transition: background 0.15s ease; } .ds-btn-prom:hover { background: #0066D6; } .ds-btn-prom:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,122,255,0.3); } .ds-btn-prom:active { background: #005BBB; }"
+    },
+    {
+      "name": "Plain Accent Button",
+      "kind": "button",
+      "refersTo": "button-bordered",
+      "description": "borderless text button in accent — Back, Disconnect, the settings gear. Hoverable but chrome-free.",
+      "html": "<button class=\"ds-btn-plain\">‹ Back</button>",
+      "css": ".ds-btn-plain { padding: 2px 4px; background: transparent; color: #007AFF; font: 400 13px -apple-system, sans-serif; border: none; cursor: default; } .ds-btn-plain:hover { text-decoration: underline; } .ds-btn-plain:focus-visible { outline: 2px solid rgba(0,122,255,0.5); outline-offset: 1px; border-radius: 4px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "input",
+      "refersTo": "segmented-control",
+      "description": "macOS segmented picker — unit (cm/inch) and movement mode (hold/auto) choices.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg-item ds-seg-item--on\">cm</button><button class=\"ds-seg-item\">inch</button></div>",
+      "css": ".ds-seg { display: inline-flex; background: #E4E4E6; border-radius: 7px; padding: 2px; font-family: -apple-system, sans-serif; } .ds-seg-item { padding: 3px 14px; border: none; border-radius: 5px; background: transparent; font-size: 12px; color: #3C3C43; cursor: default; } .ds-seg-item--on { background: #007AFF; color: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.12); } .ds-seg-item:focus-visible { outline: 2px solid rgba(0,122,255,0.5); outline-offset: -1px; }"
+    },
+    {
+      "name": "Height Readout",
+      "kind": "custom",
+      "refersTo": "typography.display",
+      "description": "The live height — 36pt bold SF Pro Rounded, the largest element in the app.",
+      "html": "<div class=\"ds-readout\">70.9 <span class=\"ds-readout-unit\">cm</span></div>",
+      "css": ".ds-readout { font-family: -apple-system, \"SF Pro Rounded\", ui-rounded, sans-serif; font-size: 36px; font-weight: 700; letter-spacing: 0em; color: #1D1D1F; } .ds-readout-unit { font-weight: 700; }"
+    },
+    {
+      "name": "Menu Bar Readout",
+      "kind": "nav",
+      "refersTo": "menu-bar-zone2",
+      "description": "Zone-2 status text in the menu bar — active preset + live height, or a state string.",
+      "html": "<span class=\"ds-menubar\">1&nbsp;&nbsp;70.9 cm</span>",
+      "css": ".ds-menubar { font: 400 13px -apple-system, sans-serif; color: #1D1D1F; letter-spacing: 0em; }"
+    },
+    {
+      "name": "Progress Bars",
+      "kind": "custom",
+      "refersTo": "progress-bars",
+      "description": "First-run flow progress — a row of thin bars, filled segments in accent, remainder in secondary at 30%.",
+      "html": "<div class=\"ds-bars\"><span class=\"ds-bar ds-bar--on\"></span><span class=\"ds-bar ds-bar--on\"></span><span class=\"ds-bar\"></span><span class=\"ds-bar\"></span></div>",
+      "css": ".ds-bars { display: flex; gap: 4px; } .ds-bar { flex: 1; height: 4px; border-radius: 1px; background: rgba(60,60,67,0.3); } .ds-bar--on { background: #007AFF; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Built-in Instrument",
+    "overview": "Lever's interface is honest machinery. It looks and behaves like something macOS shipped, because everything about it is borrowed from the platform: system accent, system materials, system text styles, SF Symbols, standard controls. There is no brand color, no custom typeface, no decorative chrome. The ambition is not to be noticed — it is to be trusted on sight, the way a physical instrument panel earns trust by reporting exactly what the machine is doing and nothing more.\n\nThat restraint is a product decision, not an absence of design. The desk is a piece of hardware that physically moves; the interface is its readout and its controls. Every pixel exists to answer \"what is the desk doing right now\" or to move it. Color appears when the machine has something to say (a fault, an active preset, a confirmation) — which is why a quiet gray interface can shout effectively when it needs to.",
+    "keyCharacteristics": [
+      "Pure system accent — inherits the user's macOS theme, zero brand color",
+      "Semantic color only: accent = active/actionable, orange = fault, green = confirmed, red = destructive",
+      "One expressive type moment: the 36 pt rounded weight readout",
+      "8 pt rounded rectangles as the sole geometry beyond system chrome",
+      "Content surface is flat; depth lives in the system popover material"
+    ],
+    "rules": [
+      { "name": "The Semantic-Only Rule", "body": "If a color does not come from a semantic system token (accent, orange, green, red, secondary, controlBackground), it does not belong in this interface. Brand color is a deliberate absence.", "section": "colors" },
+      { "name": "The Rounded Readout Rule", "body": ".rounded is reserved for the live height number — one expressive moment that makes the instrument feel machined. Everything else uses default SF Pro.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "No element inside the popover draws a custom shadow. State changes are expressed by tint, border, and opacity — never by lift.", "section": "elevation" },
+      { "name": "The One-Radius Rule", "body": "If a new container is needed, it takes 8 pt. If the system provides a shape (buttons, segmented control, popover), the system's shape wins unmodified.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do use `Color.accentColor` for anything interactive — it is the only accent this app will ever have.",
+      "Do express state through tint (15 % accent fill), border (2 pt accent ring), and opacity (40 % dim) — the established state vocabulary.",
+      "Do keep the 280 pt column; new surfaces fit inside it.",
+      "Do use `.secondary` for every hint, caption, and explanation.",
+      "Do let system controls keep their shape, material, and behavior."
+    ],
+    "donts": [
+      "Don't introduce a brand color, custom font, gradient, or custom shadow — the absence of all four is the identity.",
+      "Don't use `.rounded` type anywhere except the height readout.",
+      "Don't use orange, green, or red decoratively — each already means fault, confirmed, and destructive.",
+      "Don't add container radii other than 8 pt (or 1 pt for bars).",
+      "Don't hide or jump the layout on disconnect — dim to 40 % instead."
+    ]
+  }
+}
