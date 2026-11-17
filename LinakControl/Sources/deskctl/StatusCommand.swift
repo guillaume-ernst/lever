@@ -39,6 +39,13 @@ struct StatusCommand: ParsableCommand {
         if !presetsLabel.isEmpty {
             print("  Presets:    \(presetsLabel)")
         }
+        if !status.softwarePresets.isEmpty {
+            let sw = status.softwarePresets.map { preset in
+                let marker = (preset.id == status.activeSoftwarePreset) ? "*" : ""
+                return "\(preset.name)=\(String(format: "%.1f", Double(preset.heightMM) / 10))\(status.unit)\(marker)"
+            }.joined(separator: "  ")
+            print("  Software:   \(sw)")
+        }
         if status.needsReference {
             print("  Warning:    \(warningText(faultCode: status.faultCode))")
         }

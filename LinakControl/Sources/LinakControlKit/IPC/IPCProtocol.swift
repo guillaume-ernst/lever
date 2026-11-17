@@ -20,6 +20,11 @@ public enum IPCMethod: String, Codable, Sendable {
     case stop
     case goPreset
     case savePreset
+    case goSoftwarePreset
+    case addSoftwarePreset
+    case removeSoftwarePreset
+    case renameSoftwarePreset
+    case repointSoftwarePreset
 }
 
 // MARK: - IPCParams
@@ -28,6 +33,10 @@ public enum IPCMethod: String, Codable, Sendable {
 public enum IPCParams: Codable, Sendable {
     case move(direction: String, mode: String?)
     case preset(index: Int)
+    /// Software-preset operations. `id` is a UUID string; `name` selects the
+    /// preset by name (case-insensitive); `newName` is the rename target.
+    /// Which fields a method requires is validated server-side.
+    case software(id: String?, name: String?, newName: String?)
 
     // MARK: CodingKeys
 
@@ -35,12 +44,23 @@ public enum IPCParams: Codable, Sendable {
         case direction
         case mode
         case index
+        case id
+        case name
+        case newName = "new_name"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if let index = try container.decodeIfPresent(Int.self, forKey: .index) {
             self = .preset(index: index)
+        } else if container.contains(.id)
+                    || container.contains(.name)
+                    || container.contains(.newName) {
+            self = .software(
+                id: try container.decodeIfPresent(String.self, forKey: .id),
+                name: try container.decodeIfPresent(String.self, forKey: .name),
+                newName: try container.decodeIfPresent(String.self, forKey: .newName)
+            )
         } else {
             let direction = try container.decode(String.self, forKey: .direction)
             let mode = try container.decodeIfPresent(String.self, forKey: .mode)
@@ -56,6 +76,10 @@ public enum IPCParams: Codable, Sendable {
             try container.encodeIfPresent(mode, forKey: .mode)
         case .preset(let index):
             try container.encode(index, forKey: .index)
+        case .software(let id, let name, let newName):
+            try container.encodeIfPresent(id, forKey: .id)
+            try container.encodeIfPresent(name, forKey: .name)
+            try container.encodeIfPresent(newName, forKey: .newName)
         }
     }
 }
@@ -84,6 +108,10 @@ public struct StatusResult: Codable, Sendable {
     public let unit: String
     public let presets: [PresetInfo]
     public let activePreset: Int?
+    /// App-side named presets beyond the hardware slots.
+    public let softwarePresets: [SoftwarePresetInfo]
+    /// Id of the software preset matching the current height, if any.
+    public let activeSoftwarePreset: String?
     /// True when a movement stalled and the desk may need a manual reset (E16).
     public let needsReference: Bool
     /// Raw desk fault code behind `needsReference` when the desk pushed one, else nil.
@@ -97,6 +125,8 @@ public struct StatusResult: Codable, Sendable {
         unit: String,
         presets: [PresetInfo] = [],
         activePreset: Int? = nil,
+        softwarePresets: [SoftwarePresetInfo] = [],
+        activeSoftwarePreset: String? = nil,
         needsReference: Bool = false,
         faultCode: Int? = nil
     ) {
@@ -107,6 +137,8 @@ public struct StatusResult: Codable, Sendable {
         self.unit = unit
         self.presets = presets
         self.activePreset = activePreset
+        self.softwarePresets = softwarePresets
+        self.activeSoftwarePreset = activeSoftwarePreset
         self.needsReference = needsReference
         self.faultCode = faultCode
     }
@@ -121,6 +153,8 @@ public struct StatusResult: Codable, Sendable {
         presets = try c.decodeIfPresent([PresetInfo].self, forKey: .presets) ?? []
         activePreset = try c.decodeIfPresent(Int.self, forKey: .activePreset)
         // Tolerant of daemons predating these fields (rolling upgrade).
+        softwarePresets = try c.decodeIfPresent([SoftwarePresetInfo].self, forKey: .softwarePresets) ?? []
+        activeSoftwarePreset = try c.decodeIfPresent(String.self, forKey: .activeSoftwarePreset)
         needsReference = try c.decodeIfPresent(Bool.self, forKey: .needsReference) ?? false
         faultCode = try c.decodeIfPresent(Int.self, forKey: .faultCode)
     }
@@ -133,6 +167,8 @@ public struct StatusResult: Codable, Sendable {
         case unit
         case presets
         case activePreset = "active_preset"
+        case softwarePresets = "software_presets"
+        case activeSoftwarePreset = "active_software_preset"
         case needsReference = "needs_reference"
         case faultCode = "fault_code"
     }
@@ -155,6 +191,28 @@ public struct PresetInfo: Codable, Sendable {
         case index
         case heightMM = "height_mm"
         case label
+    }
+}
+
+// MARK: - SoftwarePresetInfo
+
+/// IPC-facing view of a software preset. Heights are absolute
+/// (deskOffsetMM already applied), matching `PresetInfo`'s convention.
+public struct SoftwarePresetInfo: Codable, Sendable {
+    public let id: String
+    public let name: String
+    public let heightMM: Int
+
+    public init(id: String, name: String, heightMM: Int) {
+        self.id = id
+        self.name = name
+        self.heightMM = heightMM
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case heightMM = "height_mm"
     }
 }
 

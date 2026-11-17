@@ -94,6 +94,63 @@ public final class IPCClient {
         return try extractTargetMM(response)
     }
 
+    // MARK: - Software presets
+
+    /// Moves to a software preset, resolved by `id` (UUID) or `name` server-side.
+    public func goSoftwarePreset(id: String? = nil, name: String? = nil) throws -> Int? {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .goSoftwarePreset,
+            params: .software(id: id, name: name, newName: nil)
+        )
+        let response = try send(request)
+        return try extractTargetMM(response)
+    }
+
+    /// Adds a software preset under `name` at the desk's current height.
+    public func addSoftwarePreset(name: String) throws {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .addSoftwarePreset,
+            params: .software(id: nil, name: name, newName: nil)
+        )
+        let response = try send(request)
+        try assertOkResult(response)
+    }
+
+    /// Removes a software preset, resolved by `id` or `name` server-side.
+    public func removeSoftwarePreset(id: String? = nil, name: String? = nil) throws {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .removeSoftwarePreset,
+            params: .software(id: id, name: name, newName: nil)
+        )
+        let response = try send(request)
+        try assertOkResult(response)
+    }
+
+    /// Renames a software preset, resolved by `id` or `name` server-side.
+    public func renameSoftwarePreset(id: String? = nil, name: String? = nil, newName: String) throws {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .renameSoftwarePreset,
+            params: .software(id: id, name: name, newName: newName)
+        )
+        let response = try send(request)
+        try assertOkResult(response)
+    }
+
+    /// Points a software preset at the desk's current height, resolved by `id` or `name`.
+    public func repointSoftwarePreset(id: String? = nil, name: String? = nil) throws {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .repointSoftwarePreset,
+            params: .software(id: id, name: name, newName: nil)
+        )
+        let response = try send(request)
+        try assertOkResult(response)
+    }
+
     // MARK: - Connection
 
     private func openConnection() throws -> Int32 {

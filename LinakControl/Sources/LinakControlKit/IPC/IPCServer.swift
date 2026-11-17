@@ -272,6 +272,16 @@ public final class IPCServer: @unchecked Sendable {
             return await handleGoPreset(request)
         case .savePreset:
             return await handleSavePreset(request)
+        case .goSoftwarePreset:
+            return await handleGoSoftwarePreset(request)
+        case .addSoftwarePreset:
+            return await handleAddSoftwarePreset(request)
+        case .removeSoftwarePreset:
+            return await handleRemoveSoftwarePreset(request)
+        case .renameSoftwarePreset:
+            return await handleRenameSoftwarePreset(request)
+        case .repointSoftwarePreset:
+            return await handleRepointSoftwarePreset(request)
         }
     }
 
@@ -339,6 +349,108 @@ public final class IPCServer: @unchecked Sendable {
         }
     }
 
+    // MARK: - Software preset handlers
+
+    /// Resolves a software preset by UUID (`id` param) first, then by
+    /// case-insensitive name match. Returns nil when neither finds a preset.
+    private func resolveSoftwarePreset(id: String?, name: String?) async -> SoftwarePreset? {
+        let presets = await deskManager.currentState.softwarePresets
+        if let id, let uuid = UUID(uuidString: id),
+           let match = presets.first(where: { $0.id == uuid }) {
+            return match
+        }
+        if let name {
+            return presets.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame })
+        }
+        return nil
+    }
+
+    private func softwareParams(_ request: IPCRequest) -> (id: String?, name: String?, newName: String?)? {
+        guard let params = request.params, case .software(let id, let name, let newName) = params else {
+            return nil
+        }
+        return (id, name, newName)
+    }
+
+    private func handleGoSoftwarePreset(_ request: IPCRequest) async -> IPCResponse {
+        guard let params = softwareParams(request) else {
+            return makeError(id: request.id, code: .invalidRequest, message: "missing software preset params")
+        }
+        guard let preset = await resolveSoftwarePreset(id: params.id, name: params.name) else {
+            return makeError(id: request.id, code: .general, message: "software preset not found")
+        }
+        do {
+            try await deskManager.goToSoftwarePreset(id: preset.id)
+            let state = await deskManager.currentState
+            return IPCResponse(id: request.id, result: .ok(targetMM: preset.heightMM + state.deskOffsetMM), error: nil)
+        } catch {
+            return deskErrorResponse(id: request.id, error: error)
+        }
+    }
+
+    private func handleAddSoftwarePreset(_ request: IPCRequest) async -> IPCResponse {
+        guard let params = softwareParams(request), let name = params.name, !name.isEmpty else {
+            return makeError(id: request.id, code: .invalidRequest, message: "missing preset name")
+        }
+        guard let heightMM = await deskManager.currentState.heightMM else {
+            return makeError(id: request.id, code: .general, message: "current height unknown — connect the desk first")
+        }
+        do {
+            _ = try await deskManager.addSoftwarePreset(name: name, heightMM: heightMM)
+            return IPCResponse(id: request.id, result: .ok(targetMM: nil), error: nil)
+        } catch {
+            return deskErrorResponse(id: request.id, error: error)
+        }
+    }
+
+    private func handleRemoveSoftwarePreset(_ request: IPCRequest) async -> IPCResponse {
+        guard let params = softwareParams(request) else {
+            return makeError(id: request.id, code: .invalidRequest, message: "missing software preset params")
+        }
+        guard let preset = await resolveSoftwarePreset(id: params.id, name: params.name) else {
+            return makeError(id: request.id, code: .general, message: "software preset not found")
+        }
+        do {
+            try await deskManager.removeSoftwarePreset(id: preset.id)
+            return IPCResponse(id: request.id, result: .ok(targetMM: nil), error: nil)
+        } catch {
+            return deskErrorResponse(id: request.id, error: error)
+        }
+    }
+
+    private func handleRenameSoftwarePreset(_ request: IPCRequest) async -> IPCResponse {
+        guard let params = softwareParams(request), let newName = params.newName, !newName.isEmpty else {
+            return makeError(id: request.id, code: .invalidRequest, message: "missing new name")
+        }
+        guard let preset = await resolveSoftwarePreset(id: params.id, name: params.name) else {
+            return makeError(id: request.id, code: .general, message: "software preset not found")
+        }
+        do {
+            try await deskManager.updateSoftwarePreset(id: preset.id, name: newName)
+            return IPCResponse(id: request.id, result: .ok(targetMM: nil), error: nil)
+        } catch {
+            return deskErrorResponse(id: request.id, error: error)
+        }
+    }
+
+    private func handleRepointSoftwarePreset(_ request: IPCRequest) async -> IPCResponse {
+        guard let params = softwareParams(request) else {
+            return makeError(id: request.id, code: .invalidRequest, message: "missing software preset params")
+        }
+        guard let preset = await resolveSoftwarePreset(id: params.id, name: params.name) else {
+            return makeError(id: request.id, code: .general, message: "software preset not found")
+        }
+        guard let heightMM = await deskManager.currentState.heightMM else {
+            return makeError(id: request.id, code: .general, message: "current height unknown — connect the desk first")
+        }
+        do {
+            try await deskManager.updateSoftwarePreset(id: preset.id, heightMM: heightMM)
+            return IPCResponse(id: request.id, result: .ok(targetMM: nil), error: nil)
+        } catch {
+            return deskErrorResponse(id: request.id, error: error)
+        }
+    }
+
     // MARK: - Error Helpers
 
     private func makeError(id: String, code: IPCErrorCode, message: String) -> IPCResponse {
@@ -375,6 +487,13 @@ extension IPCServer {
                 label: preset.label
             )
         }
+        let softwarePresets = state.softwarePresets.map { preset in
+            SoftwarePresetInfo(
+                id: preset.id.uuidString,
+                name: preset.name,
+                heightMM: preset.heightMM + offset
+            )
+        }
         return StatusResult(
             connected: state.connectionState == .connected,
             deskName: state.deskName,
@@ -383,6 +502,8 @@ extension IPCServer {
             unit: config.unit.rawValue,
             presets: presets,
             activePreset: state.activePreset,
+            softwarePresets: softwarePresets,
+            activeSoftwarePreset: state.activeSoftwarePresetID?.uuidString,
             needsReference: state.needsReference,
             faultCode: state.faultCode.map(Int.init)
         )
