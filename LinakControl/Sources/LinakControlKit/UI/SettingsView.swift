@@ -245,6 +245,8 @@ private struct PresetRowView: View {
     let unit: HeightUnit
     let onSave: () -> Void
 
+    @State private var confirmOverwrite = false
+
     var body: some View {
         HStack {
             Text("\(preset.index):")
@@ -260,10 +262,30 @@ private struct PresetRowView: View {
 
             Spacer()
 
-            Button("Save current", action: onSave)
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+            Button("Save current") {
+                // Writing into an empty slot loses nothing — confirm only on overwrite.
+                if preset.heightMM == nil {
+                    onSave()
+                } else {
+                    confirmOverwrite = true
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .confirmationDialog(
+                overwriteTitle,
+                isPresented: $confirmOverwrite,
+                titleVisibility: .visible
+            ) {
+                Button("Replace", action: onSave)
+                Button("Cancel", role: .cancel) {}
+            }
         }
+    }
+
+    private var overwriteTitle: String {
+        guard let heightMM = preset.heightMM else { return "" }
+        return "Replace preset \(preset.index) (\(HeightConverter.display(mm: heightMM, unit: unit))) with the current height?"
     }
 }
 
@@ -271,6 +293,7 @@ private struct PresetRowView: View {
 
 private struct ConnectionSection: View {
     @ObservedObject var viewModel: DeskViewModel
+    @State private var confirmForget = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -289,10 +312,20 @@ private struct ConnectionSection: View {
             }
 
             Button("Forget & Re-scan") {
-                viewModel.forgetAndRescan()
+                confirmForget = true
             }
             .buttonStyle(.bordered)
             .foregroundColor(.red)
+            .confirmationDialog(
+                "Forget \(viewModel.deskName ?? "this desk") and scan again?",
+                isPresented: $confirmForget,
+                titleVisibility: .visible
+            ) {
+                Button("Forget", role: .destructive) { viewModel.forgetAndRescan() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Pairing is lost — the controller must be in pairing mode (blue LED) to connect again.")
+            }
         }
     }
 }
