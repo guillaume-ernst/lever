@@ -249,10 +249,15 @@ public actor DeskManager {
     }
 
     /// Appends a software preset storing `heightMM` under `name`; persists to config.
+    /// Names are unique (case-insensitive) so menu rows stay distinguishable.
+    /// - Throws: `DeskError.softwarePresetNameTaken` on a name collision.
     /// - Returns: The created preset (callers can use its id for immediate rename).
     @discardableResult
     public func addSoftwarePreset(name: String, heightMM: Int) throws -> SoftwarePreset {
         var config = try configStore.load()
+        if config.softwarePresets.contains(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+            throw DeskError.softwarePresetNameTaken(name)
+        }
         let preset = SoftwarePreset(name: name, heightMM: heightMM)
         config.softwarePresets.append(preset)
         try configStore.save(config)
@@ -262,9 +267,17 @@ public actor DeskManager {
 
     /// Updates fields of an existing software preset (rename and/or new
     /// height); persists to config. No-op when the id is unknown.
+    /// - Throws: `DeskError.softwarePresetNameTaken` when `name` collides
+    ///   with a *different* preset (renaming to itself is fine).
     public func updateSoftwarePreset(id: UUID, name: String? = nil, heightMM: Int? = nil) throws {
         var config = try configStore.load()
         guard let i = config.softwarePresets.firstIndex(where: { $0.id == id }) else { return }
+        if let name,
+           config.softwarePresets.contains(where: {
+               $0.id != id && $0.name.caseInsensitiveCompare(name) == .orderedSame
+           }) {
+            throw DeskError.softwarePresetNameTaken(name)
+        }
         if let name { config.softwarePresets[i].name = name }
         if let heightMM { config.softwarePresets[i].heightMM = heightMM }
         try configStore.save(config)

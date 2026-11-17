@@ -96,7 +96,9 @@ private struct SettingsDivider: View {
 // MARK: - SectionHeader
 
 private struct SectionHeader: View {
-    let title: String
+    // LocalizedStringKey keeps literal call sites localizable — Text(title)
+    // resolves through the app's strings table.
+    let title: LocalizedStringKey
 
     var body: some View {
         Text(title)
@@ -245,6 +247,7 @@ private struct PresetsSection: View {
                 SoftwarePresetRow(
                     preset: preset,
                     unit: viewModel.unit,
+                    otherNames: Set(viewModel.softwarePresets.filter { $0.id != preset.id }.map { $0.name.lowercased() }),
                     canMoveUp: index > 0,
                     canMoveDown: index < viewModel.softwarePresets.count - 1,
                     onRename: { viewModel.renameSoftwarePreset(id: preset.id, name: $0) },
@@ -270,8 +273,8 @@ private struct PresetsSection: View {
 
     private var addTitle: String {
         viewModel.heightDisplay == "—"
-            ? "Add preset"
-            : "Add preset at \(viewModel.heightDisplay)"
+            ? String(localized: "Add preset")
+            : String(localized: "Add preset at \(viewModel.heightDisplay)")
     }
 }
 
@@ -282,6 +285,9 @@ private struct PresetsSection: View {
 private struct SoftwarePresetRow: View {
     let preset: SoftwarePreset
     let unit: HeightUnit
+    /// Lowercased names of every *other* software preset — used to reject
+    /// renames that would collide (menu rows must stay distinguishable).
+    let otherNames: Set<String>
     let canMoveUp: Bool
     let canMoveDown: Bool
     let onRename: (String) -> Void
@@ -291,10 +297,12 @@ private struct SoftwarePresetRow: View {
 
     @State private var name: String
     @State private var confirmDelete = false
+    @FocusState private var nameFocused: Bool
 
     init(
         preset: SoftwarePreset,
         unit: HeightUnit,
+        otherNames: Set<String>,
         canMoveUp: Bool,
         canMoveDown: Bool,
         onRename: @escaping (String) -> Void,
@@ -304,6 +312,7 @@ private struct SoftwarePresetRow: View {
     ) {
         self.preset = preset
         self.unit = unit
+        self.otherNames = otherNames
         self.canMoveUp = canMoveUp
         self.canMoveDown = canMoveDown
         self.onRename = onRename
@@ -320,18 +329,26 @@ private struct SoftwarePresetRow: View {
                     Image(systemName: "chevron.up")
                 }
                 .disabled(!canMoveUp)
+                .help("Move preset up")
                 Button { onMove(1) } label: {
                     Image(systemName: "chevron.down")
                 }
                 .disabled(!canMoveDown)
+                .help("Move preset down")
             }
             .buttonStyle(.borderless)
-            .controlSize(.mini)
+            .controlSize(.small)
             .font(.caption2)
 
             TextField("Name", text: $name)
                 .textFieldStyle(.roundedBorder)
+                .focused($nameFocused)
                 .onSubmit(commitRename)
+                .onChange(of: nameFocused) { focused in
+                    // Return is not the only way out — commit on focus loss
+                    // too, or the edit silently vanishes.
+                    if !focused { commitRename() }
+                }
 
             Text(HeightConverter.display(mm: preset.heightMM, unit: unit))
                 .font(.body)
@@ -365,7 +382,11 @@ private struct SoftwarePresetRow: View {
 
     private func commitRename() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, trimmed != preset.name else {
+        // Blank or colliding with another preset's name → restore the stored
+        // name; the field never holds a value the model would reject.
+        guard !trimmed.isEmpty,
+              trimmed != preset.name,
+              !otherNames.contains(trimmed.lowercased()) else {
             name = preset.name
             return
         }
@@ -421,7 +442,7 @@ private struct PresetRowView: View {
 
     private var overwriteTitle: String {
         guard let heightMM = preset.heightMM else { return "" }
-        return "Replace preset \(preset.index) (\(HeightConverter.display(mm: heightMM, unit: unit))) with the current height?"
+        return String(localized: "Replace preset \(preset.index) (\(HeightConverter.display(mm: heightMM, unit: unit))) with the current height?")
     }
 }
 
@@ -438,7 +459,7 @@ private struct ConnectionSection: View {
             HStack {
                 Text("Desk:")
                     .foregroundColor(.secondary)
-                Text(viewModel.deskName ?? "Unknown")
+                Text(viewModel.deskName ?? String(localized: "Unknown"))
                     .lineLimit(1)
                 Spacer()
                 if viewModel.connectionState == .connected {
@@ -453,7 +474,7 @@ private struct ConnectionSection: View {
             .buttonStyle(.bordered)
             .foregroundColor(.red)
             .confirmationDialog(
-                "Forget \(viewModel.deskName ?? "this desk") and scan again?",
+                "Forget \(viewModel.deskName ?? String(localized: "this desk")) and scan again?",
                 isPresented: $confirmForget,
                 titleVisibility: .visible
             ) {

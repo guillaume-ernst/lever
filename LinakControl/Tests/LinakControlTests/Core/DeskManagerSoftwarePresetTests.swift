@@ -148,6 +148,55 @@ final class DeskManagerSoftwarePresetCRUDTests: XCTestCase {
         let persisted = try setup.store.load()
         XCTAssertEqual(persisted.softwarePresets.map(\.name), ["B", "A", "C"])
     }
+
+    func testAddSoftwarePresetRejectsDuplicateName() async throws {
+        let setup = try await makeSoftwarePresetSetup(
+            presets: [makeSoftwarePreset(name: "Focus")]
+        )
+
+        do {
+            try await setup.manager.addSoftwarePreset(name: "focus", heightMM: 800)
+            XCTFail("Expected DeskError.softwarePresetNameTaken")
+        } catch DeskError.softwarePresetNameTaken(let name) {
+            XCTAssertEqual(name, "focus")
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        // Nothing was persisted for the rejected add.
+        let persisted = try setup.store.load()
+        XCTAssertEqual(persisted.softwarePresets.count, 1)
+    }
+
+    func testUpdateSoftwarePresetRejectsCollidingRename() async throws {
+        let a = makeSoftwarePreset(name: "Focus", heightMM: 700)
+        let b = makeSoftwarePreset(name: "Stand", heightMM: 1100)
+        let setup = try await makeSoftwarePresetSetup(presets: [a, b])
+
+        do {
+            try await setup.manager.updateSoftwarePreset(id: b.id, name: "FOCUS")
+            XCTFail("Expected DeskError.softwarePresetNameTaken")
+        } catch DeskError.softwarePresetNameTaken {
+            // expected
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        let persisted = try setup.store.load()
+        XCTAssertEqual(persisted.softwarePresets.map(\.name), ["Focus", "Stand"])
+    }
+
+    func testUpdateSoftwarePresetAllowsRenameToSameName() async throws {
+        let preset = makeSoftwarePreset(name: "Focus", heightMM: 700)
+        let setup = try await makeSoftwarePresetSetup(presets: [preset])
+
+        // Renaming a preset to its own (case-variant) name must not collide
+        // with itself.
+        try await setup.manager.updateSoftwarePreset(id: preset.id, name: "focus")
+
+        let persisted = try setup.store.load()
+        XCTAssertEqual(persisted.softwarePresets.first?.name, "focus")
+    }
 }
 
 // MARK: - Recall Tests
@@ -301,5 +350,37 @@ final class SoftwarePresetConfigTests: XCTestCase {
         XCTAssertNotNil(decoded.id)
         XCTAssertEqual(decoded.name, "Stand")
         XCTAssertEqual(decoded.heightMM, 1105)
+    }
+}
+
+// MARK: - Generated Name Tests
+
+final class SoftwarePresetNamingTests: XCTestCase {
+
+    func testUniquePresetNameStartsAtFive() {
+        XCTAssertEqual(DeskViewModel.uniquePresetName(existing: []), "Preset 5")
+    }
+
+    func testUniquePresetNameSkipsTaken() {
+        XCTAssertEqual(
+            DeskViewModel.uniquePresetName(existing: ["Preset 5", "Preset 6"]),
+            "Preset 7"
+        )
+    }
+
+    func testUniquePresetNameCaseInsensitive() {
+        XCTAssertEqual(DeskViewModel.uniquePresetName(existing: ["preset 5"]), "Preset 6")
+    }
+
+    func testUniquePresetNameIgnoresUnrelatedNames() {
+        XCTAssertEqual(DeskViewModel.uniquePresetName(existing: ["Focus", "Stand"]), "Preset 5")
+    }
+
+    func testUniquePresetNameFillsGaps() {
+        // User deleted Preset 5 — the name is free again even with 6+ taken.
+        XCTAssertEqual(
+            DeskViewModel.uniquePresetName(existing: ["Preset 6", "Preset 7"]),
+            "Preset 5"
+        )
     }
 }

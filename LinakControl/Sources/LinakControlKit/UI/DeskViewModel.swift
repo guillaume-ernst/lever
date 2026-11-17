@@ -172,16 +172,31 @@ public final class DeskViewModel: ObservableObject {
     }
 
     /// Saves the current height as a new software preset named "Preset N"
-    /// (numbering continues after the four hardware slots). No-op when the
-    /// current height is unknown.
+    /// (numbering continues after the four hardware slots, skipping names
+    /// already taken). No-op when the current height is unknown.
     public func addSoftwarePresetAtCurrentHeight() {
         guard let mm = heightMM else { return }
-        let name = "Preset \(softwarePresets.count + 5)"
+        let name = Self.uniquePresetName(existing: softwarePresets.map(\.name))
         FileLog.debug("addSoftwarePreset(\(name), \(mm)mm)", category: "ui")
         Task {
             do { _ = try await deskManager.addSoftwarePreset(name: name, heightMM: mm) }
             catch { FileLog.debug("addSoftwarePreset FAILED: \(error)", category: "ui") }
         }
+    }
+
+    /// First free generated name in the `Preset N` series (N starts at 5,
+    /// after the four hardware slots). The candidate is the *localized* name,
+    /// so a French install dedupes "Préréglage 5" against itself, not the
+    /// English pattern.
+    nonisolated static func uniquePresetName(existing: [String]) -> String {
+        let taken = Set(existing.map { $0.lowercased() })
+        var n = 5
+        var candidate = String(localized: "Preset \(n)")
+        while taken.contains(candidate.lowercased()) {
+            n += 1
+            candidate = String(localized: "Preset \(n)")
+        }
+        return candidate
     }
 
     /// Renames an existing software preset; its stored height is kept.
