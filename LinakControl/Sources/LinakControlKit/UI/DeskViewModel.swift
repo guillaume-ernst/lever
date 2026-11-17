@@ -37,6 +37,12 @@ public final class DeskViewModel: ObservableObject {
     @Published public var presets: [PresetPosition] = (1...4).map { PresetPosition(index: $0) }
     @Published public var activePreset: Int?
     @Published public var targetPreset: Int?
+
+    /// App-side named presets beyond the hardware slots.
+    /// Heights are offset-adjusted for display, same convention as `presets`.
+    @Published public var softwarePresets: [SoftwarePreset] = []
+    @Published public var activeSoftwarePresetID: UUID?
+    @Published public var targetSoftwarePresetID: UUID?
     @Published public var unit: HeightUnit = .cm
     @Published public var deskOffsetMM: Int = 0
     @Published public var autoRunUp: RunMode = .manual
@@ -152,6 +158,60 @@ public final class DeskViewModel: ObservableObject {
         Task {
             do { try await deskManager.savePreset(index: index) }
             catch { FileLog.debug("savePreset FAILED: \(error)", category: "ui") }
+        }
+    }
+
+    // MARK: - Software presets
+
+    public func goToSoftwarePreset(id: UUID) {
+        FileLog.debug("goToSoftwarePreset(\(id))", category: "ui")
+        Task {
+            do { try await deskManager.goToSoftwarePreset(id: id) }
+            catch { FileLog.debug("goToSoftwarePreset FAILED: \(error)", category: "ui") }
+        }
+    }
+
+    /// Saves the current height as a new software preset named "Preset N"
+    /// (numbering continues after the four hardware slots). No-op when the
+    /// current height is unknown.
+    public func addSoftwarePresetAtCurrentHeight() {
+        guard let mm = heightMM else { return }
+        let name = "Preset \(softwarePresets.count + 5)"
+        FileLog.debug("addSoftwarePreset(\(name), \(mm)mm)", category: "ui")
+        Task {
+            do { _ = try await deskManager.addSoftwarePreset(name: name, heightMM: mm) }
+            catch { FileLog.debug("addSoftwarePreset FAILED: \(error)", category: "ui") }
+        }
+    }
+
+    /// Renames an existing software preset; its stored height is kept.
+    public func renameSoftwarePreset(id: UUID, name: String) {
+        Task {
+            do { try await deskManager.updateSoftwarePreset(id: id, name: name) }
+            catch { FileLog.debug("renameSoftwarePreset FAILED: \(error)", category: "ui") }
+        }
+    }
+
+    /// Re-points an existing software preset to the desk's current height.
+    public func setSoftwarePresetToCurrentHeight(id: UUID) {
+        guard let mm = heightMM else { return }
+        Task {
+            do { try await deskManager.updateSoftwarePreset(id: id, heightMM: mm) }
+            catch { FileLog.debug("setSoftwarePresetToCurrentHeight FAILED: \(error)", category: "ui") }
+        }
+    }
+
+    public func removeSoftwarePreset(id: UUID) {
+        Task {
+            do { try await deskManager.removeSoftwarePreset(id: id) }
+            catch { FileLog.debug("removeSoftwarePreset FAILED: \(error)", category: "ui") }
+        }
+    }
+
+    public func moveSoftwarePreset(fromOffsets offsets: IndexSet, toOffset destination: Int) {
+        Task {
+            do { try await deskManager.moveSoftwarePreset(fromOffsets: offsets, toOffset: destination) }
+            catch { FileLog.debug("moveSoftwarePreset FAILED: \(error)", category: "ui") }
         }
     }
 
@@ -425,6 +485,13 @@ public final class DeskViewModel: ObservableObject {
 
         activePreset = snapshot.activePreset
         targetPreset = snapshot.targetPreset
+        softwarePresets = snapshot.softwarePresets.map { preset in
+            var adjusted = preset
+            adjusted.heightMM = preset.heightMM + offset
+            return adjusted
+        }
+        activeSoftwarePresetID = snapshot.activeSoftwarePresetID
+        targetSoftwarePresetID = snapshot.targetSoftwarePresetID
         deskName = snapshot.deskName
     }
 }

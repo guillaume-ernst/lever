@@ -191,6 +191,24 @@ public final class MenuBarController: NSObject {
         for preset in viewModel.presets {
             menu.addItem(presetMenuItem(for: preset))
         }
+        if !viewModel.softwarePresets.isEmpty {
+            menu.addItem(.separator())
+            for preset in viewModel.softwarePresets {
+                menu.addItem(softwarePresetMenuItem(for: preset))
+            }
+        }
+        menu.addItem(.separator())
+        let addTitle = viewModel.heightDisplay == "—"
+            ? "Add Preset"
+            : "Add Preset at \(viewModel.heightDisplay)"
+        let add = NSMenuItem(
+            title: addTitle,
+            action: #selector(addSoftwarePresetSelected),
+            keyEquivalent: ""
+        )
+        add.target = self
+        add.isEnabled = viewModel.heightMM != nil
+        menu.addItem(add)
         menu.addItem(.separator())
         let settings = NSMenuItem(
             title: "Settings…",
@@ -214,6 +232,21 @@ public final class MenuBarController: NSObject {
         return item
     }
 
+    private func softwarePresetMenuItem(for preset: SoftwarePreset) -> NSMenuItem {
+        let heightText = HeightConverter.display(mm: preset.heightMM, unit: viewModel.unit)
+        let prefix = (preset.id == viewModel.targetSoftwarePresetID) ? "→ " : ""
+
+        let item = NSMenuItem(
+            title: "\(prefix)\(preset.name)  \(heightText)",
+            action: #selector(softwarePresetMenuItemSelected(_:)),
+            keyEquivalent: ""
+        )
+        item.representedObject = preset.id.uuidString
+        item.target = self
+        item.state = (preset.id == viewModel.activeSoftwarePresetID) ? .on : .off
+        return item
+    }
+
     @objc private func presetMenuItemSelected(_ sender: NSMenuItem) {
         // Empty slot → "+ Add" means save the current height into it.
         if viewModel.presets.first(where: { $0.index == sender.tag })?.heightMM == nil {
@@ -223,9 +256,20 @@ public final class MenuBarController: NSObject {
         }
     }
 
+    @objc private func softwarePresetMenuItemSelected(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let id = UUID(uuidString: raw) else { return }
+        viewModel.goToSoftwarePreset(id: id)
+    }
+
+    @objc private func addSoftwarePresetSelected() {
+        viewModel.addSoftwarePresetAtCurrentHeight()
+    }
+
     @objc private func settingsMenuItemSelected() {
-        // The popover hosts the settings gear — open it so the user can reach
-        // Settings without discovering the right-click gesture.
+        // Open the popover straight onto the settings panel — the user asked
+        // for Settings, not for the instrument view.
+        viewModel.showSettings = true
         if popover?.isShown == false {
             togglePopover()
         }
