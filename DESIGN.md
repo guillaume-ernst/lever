@@ -200,6 +200,12 @@ Rounded rectangle (8 pt) holding slot number (headline, accent), height
 A preset in motion **pulses** — opacity oscillating on a 0.6 s
 ease-in-out loop — the interface's only recurring animation.
 
+**Empty slot ("+ Add"):** an unconfigured slot is an invitation, not a dead
+cell — the number stays (dimmed to 65 %, one shade above the 40 %
+disconnected dim) and the height caption becomes "+ Add" in accent.
+Double-tapping saves the current height into the slot; the Zone-2 menu
+item mirrors it ("4  + Add"). Empty is a state, never a void.
+
 ### Movement buttons
 Standard `.bordered` buttons, minimum width 64 pt, SF Symbol chevrons
 (▲/▼) with a "(hold)" caption beneath. Primary action (Connect/Retry)

@@ -84,6 +84,14 @@
       "css": ".ds-preset-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 96px; padding: 8px; border-radius: 8px; font-family: -apple-system, sans-serif; } .ds-preset-cell--active { background: rgba(0,122,255,0.15); border: 2px solid #007AFF; } .ds-preset-num { font-size: 13px; font-weight: 600; color: #007AFF; } .ds-preset-h { font-size: 10px; color: #6E6E73; }"
     },
     {
+      "name": "Preset Cell (empty / + Add)",
+      "kind": "chip",
+      "refersTo": "preset-cell-add",
+      "description": "An unconfigured slot as invitation — 65% opacity (one shade above the 40% disconnected dim) and an accent '+ Add' caption; double-click saves the current height.",
+      "html": "<div class=\"ds-preset-cell ds-preset-cell--empty\"><span class=\"ds-preset-num\">4</span><span class=\"ds-preset-add\">+ Add</span></div>",
+      "css": ".ds-preset-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 96px; padding: 8px; background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; box-shadow: 0 0.5px 1px rgba(0,0,0,0.06); font-family: -apple-system, sans-serif; } .ds-preset-cell--empty { opacity: 0.65; } .ds-preset-num { font-size: 13px; font-weight: 600; color: #007AFF; } .ds-preset-add { font-size: 10px; color: #007AFF; }"
+    },
+    {
       "name": "Warning Banner",
       "kind": "custom",
       "refersTo": "warning-banner",

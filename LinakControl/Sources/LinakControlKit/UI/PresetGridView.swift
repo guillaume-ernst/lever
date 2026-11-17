@@ -95,7 +95,9 @@ private struct PresetCell: View {
         .scaleEffect(isPulsing ? 0.96 : 1.0)
         .opacity(cellOpacity)
         .contentShape(Rectangle())
-        .help(hasHeight ? "" : "Double-click to save the current height as preset \(preset.index)")
+        .help(hasHeight
+            ? "Double-click to move to \(heightText)"
+            : "Double-click to save the current height as preset \(preset.index)")
         .onTapGesture(count: 2) {
             guard isConnected else { return }
             onTap()
