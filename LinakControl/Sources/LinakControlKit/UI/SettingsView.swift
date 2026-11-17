@@ -234,7 +234,143 @@ private struct PresetsSection: View {
                     viewModel.savePreset(index: preset.index)
                 }
             }
+
+            Text("Software")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+                .padding(.top, 6)
+
+            ForEach(Array(viewModel.softwarePresets.enumerated()), id: \.element.id) { index, preset in
+                SoftwarePresetRow(
+                    preset: preset,
+                    unit: viewModel.unit,
+                    canMoveUp: index > 0,
+                    canMoveDown: index < viewModel.softwarePresets.count - 1,
+                    onRename: { viewModel.renameSoftwarePreset(id: preset.id, name: $0) },
+                    onSetHeight: { viewModel.setSoftwarePresetToCurrentHeight(id: preset.id) },
+                    onDelete: { viewModel.removeSoftwarePreset(id: preset.id) },
+                    onMove: { direction in
+                        // move(fromOffsets:toOffset:) counts toOffset in the
+                        // array *before* removal — one row down is index+2.
+                        let destination = direction < 0 ? index - 1 : index + 2
+                        viewModel.moveSoftwarePreset(fromOffsets: [index], toOffset: destination)
+                    }
+                )
+            }
+
+            Button(addTitle) {
+                viewModel.addSoftwarePresetAtCurrentHeight()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(viewModel.heightMM == nil)
         }
+    }
+
+    private var addTitle: String {
+        viewModel.heightDisplay == "—"
+            ? "Add preset"
+            : "Add preset at \(viewModel.heightDisplay)"
+    }
+}
+
+// MARK: - SoftwarePresetRow
+
+/// One row of the software preset list: reorder chevrons, inline-editable
+/// name, stored height, re-point and delete actions.
+private struct SoftwarePresetRow: View {
+    let preset: SoftwarePreset
+    let unit: HeightUnit
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let onRename: (String) -> Void
+    let onSetHeight: () -> Void
+    let onDelete: () -> Void
+    let onMove: (Int) -> Void
+
+    @State private var name: String
+    @State private var confirmDelete = false
+
+    init(
+        preset: SoftwarePreset,
+        unit: HeightUnit,
+        canMoveUp: Bool,
+        canMoveDown: Bool,
+        onRename: @escaping (String) -> Void,
+        onSetHeight: @escaping () -> Void,
+        onDelete: @escaping () -> Void,
+        onMove: @escaping (Int) -> Void
+    ) {
+        self.preset = preset
+        self.unit = unit
+        self.canMoveUp = canMoveUp
+        self.canMoveDown = canMoveDown
+        self.onRename = onRename
+        self.onSetHeight = onSetHeight
+        self.onDelete = onDelete
+        self.onMove = onMove
+        _name = State(initialValue: preset.name)
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            VStack(spacing: 0) {
+                Button { onMove(-1) } label: {
+                    Image(systemName: "chevron.up")
+                }
+                .disabled(!canMoveUp)
+                Button { onMove(1) } label: {
+                    Image(systemName: "chevron.down")
+                }
+                .disabled(!canMoveDown)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.mini)
+            .font(.caption2)
+
+            TextField("Name", text: $name)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit(commitRename)
+
+            Text(HeightConverter.display(mm: preset.heightMM, unit: unit))
+                .font(.body)
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            Button(action: onSetHeight) {
+                Image(systemName: "arrow.down.to.line")
+            }
+            .buttonStyle(.borderless)
+            .help("Set to the desk's current height")
+
+            Button(role: .destructive) {
+                confirmDelete = true
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+            .help("Delete this preset")
+            .confirmationDialog(
+                "Delete preset \"\(preset.name)\"?",
+                isPresented: $confirmDelete,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive, action: onDelete)
+                Button("Cancel", role: .cancel) {}
+            }
+        }
+    }
+
+    private func commitRename() {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, trimmed != preset.name else {
+            name = preset.name
+            return
+        }
+        name = trimmed
+        onRename(trimmed)
     }
 }
 
