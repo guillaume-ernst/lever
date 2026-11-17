@@ -1,4 +1,4 @@
-# Memory Index — linak-control
+# Memory Index — lever
 
 > Routing rules are in CLAUDE.md (root). This file is the index only.
 > Budget: ≤ 200 lines. Archive entries when stale. Run /memory-sync to check.

@@ -1,4 +1,4 @@
-# Troubleshooting -- linak-control
+# Troubleshooting -- lever
 <!-- Known issues and proven fixes. Updated: 2026-08-31 -->
 
 <!-- 2026-07-18 -->

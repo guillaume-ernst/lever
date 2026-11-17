@@ -1,4 +1,4 @@
-# Domain -- linak-control
+# Domain -- lever
 <!-- Business rules, data models, entities, domain language. Updated: 2026-04-02 -->
 
 ## LINAK DPG1C Protocol

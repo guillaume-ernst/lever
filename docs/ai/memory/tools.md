@@ -1,4 +1,4 @@
-# Tools -- linak-control
+# Tools -- lever
 <!-- CI, build pipeline, API clients, local dev setup. Updated: 2026-04-02 -->
 
 ## Build Commands
@@ -14,9 +14,9 @@
 
 ## Debug Logging
 
-- Debug builds write to `~/Library/Logs/LinakControl/debug.log`
+- All builds (debug AND release) write to `~/Library/Logs/LinakControl/debug.log`
 - `FileLog.debug("msg", category: "ble")` -- categories: ble, core, handshake, ui, app
-- Log reset on each app launch, capped at 1 MB
+- Log persists across launches; rotates to `debug.log.1` at 1 MB (one generation kept)
 - `tail -f ~/Library/Logs/LinakControl/debug.log` for real-time monitoring
 
 ## Config Location
@@ -27,7 +27,7 @@
 
 ## Xcode Project
 
-- Generated from `project.yml` via xcodegen (`brew install xcodegen`)
+- Generated from `project.yml` via xcodegen (`brew install xcodegen`) as `Lever.xcodeproj`, scheme `LeverApp`
 - Required for .app bundle (BLE entitlements, Info.plist, login item)
 - SPM Package.swift at `LinakControl/Package.swift` for library + tests
 - Sole external dependency: `swift-argument-parser` (Apple, for CLI)

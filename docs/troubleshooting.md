@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Recover from common LinakControl failures without filing a ticket: a symptom-first list of the issues you're most likely to hit, where the logs live (release builds write them too), an ordered diagnostic checklist, and what to include if you do need to escalate.
+Recover from common Lever failures without filing a ticket: a symptom-first list of the issues you're most likely to hit, where the logs live (release builds write them too), an ordered diagnostic checklist, and what to include if you do need to escalate.
 
 ## Common issues
 
@@ -10,7 +10,7 @@ Each entry below leads with the symptom you'll see, then explains what is happen
 
 The app launched but `LSUIElement` failed to register, or macOS suppressed the icon while waiting for Bluetooth permission.
 
-- Open **System Settings → Privacy & Security → Bluetooth** and confirm `LinakControl` is listed and enabled. Without it, `CBCentralManager` never starts and the icon may be hidden until the user grants permission.
+- Open **System Settings → Privacy & Security → Bluetooth** and confirm `Lever` is listed and enabled. Without it, `CBCentralManager` never starts and the icon may be hidden until the user grants permission.
 - If it's not in the list, re-launch the app — macOS should now prompt for Bluetooth permission.
 
 **Popover is dimmed and says "Not Connected"**
@@ -25,14 +25,14 @@ The app is paired but cannot reach the desk over BLE. Most common causes: the de
 
 - Put the desk's Bluetooth controller in pairing mode — the LED must be **blue**.
 - Confirm macOS Bluetooth is on (Control Centre → Bluetooth).
-- Confirm Bluetooth permission for `LinakControl` (see first item).
+- Confirm Bluetooth permission for `Lever` (see first item).
 - The desk must be within Bluetooth LE range (a few metres in the same room).
 
 **`deskctl` says `Daemon: not running` (exit code 2)**
 
 The menu bar app must be running for any movement, status, or preset command to work. The CLI is a thin IPC client over a Unix socket at `~/Library/Application Support/LinakControl/linakcontrol.sock`.
 
-- Launch `LinakControl.app` (Spotlight → "LinakControl").
+- Launch `Lever.app` (Spotlight → "Lever").
 - Verify with `deskctl service status` — it should print `Daemon: running`.
 
 **`deskctl` exits with code 3 (`notConnected`)**
@@ -95,7 +95,7 @@ Both debug **and release** builds write an event log to:
 tail -f ~/Library/Logs/LinakControl/debug.log
 ```
 
-Each line is timestamped with millisecond precision and tagged with a category (e.g. `[ui]`, `[ble]`, `[status]`, `[movement]`). The log **persists across app restarts** (it is no longer truncated at launch). At **1 MB** it is rotated: the full file becomes `debug.log.1` and logging continues in a fresh `debug.log` — so an intermittent fault can be captured after it happens, and if it is not in `debug.log`, look in `debug.log.1`. Only one rotated file is kept; the next rotation replaces it. Each launch appends a `=== LinakControl launch ===` banner so you can find the session boundary.
+Each line is timestamped with millisecond precision and tagged with a category (e.g. `[ui]`, `[ble]`, `[status]`, `[movement]`). The log **persists across app restarts** (it is no longer truncated at launch). At **1 MB** it is rotated: the full file becomes `debug.log.1` and logging continues in a fresh `debug.log` — so an intermittent fault can be captured after it happens, and if it is not in `debug.log`, look in `debug.log.1`. Only one rotated file is kept; the next rotation replaces it. Each launch appends a `=== Lever launch ===` banner so you can find the session boundary.
 
 This is what makes it possible to diagnose intermittent hardware faults (e.g. the desk showing **E16** and needing a manual re-reference): reproduce the fault, then send the relevant slice of `debug.log`. The `[status]` lines are the raw bytes the desk reports on its status characteristic — the raw material for pinning down exactly what the desk signalled.
 
@@ -106,7 +106,7 @@ High-frequency per-tick output (the ~10 Hz BLE write hexdump) is **debug-only** 
 `Console.app` also captures `os_log` entries and unhandled errors:
 
 1. Open `Console.app`.
-2. Filter on `LinakControl` in the search bar.
+2. Filter on `Lever` in the search bar.
 3. Reproduce the issue.
 
 It does not show the structured `[category]` lines from `debug.log`.
@@ -127,7 +127,7 @@ deskctl service status
 
 - `Daemon: running (connected)` — app and desk both good. Symptom is elsewhere.
 - `Daemon: running (disconnected)` — app up, BLE link down. Continue to step 3.
-- `Daemon: not running` — launch `LinakControl.app` and retry.
+- `Daemon: not running` — launch `Lever.app` and retry.
 
 **2. Is the desk reachable?**
 
@@ -146,7 +146,7 @@ deskctl status
 
 **4. Does macOS still trust the Bluetooth permission?**
 
-- **System Settings → Privacy & Security → Bluetooth** — `LinakControl` toggle should be **on**.
+- **System Settings → Privacy & Security → Bluetooth** — `Lever` toggle should be **on**.
 - If the toggle is missing, re-launch the app and accept the prompt.
 
 **5. Is the config sane?**
@@ -173,7 +173,7 @@ Reproduce the issue and copy the last 50–100 lines for the bug report. Grab it
 
 If the [Common issues](#common-issues) entries and the [Diagnostic steps](#diagnostic-steps) didn't resolve your problem, file an issue at:
 
-**[github.com/MMoMM-org/linak-control/issues](https://github.com/MMoMM-org/linak-control/issues)**
+**[github.com/guillaume-ernst/lever/issues](https://github.com/guillaume-ernst/lever/issues)**
 
 To save a round-trip, include this in the report:
 

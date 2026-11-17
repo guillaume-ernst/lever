@@ -1,4 +1,4 @@
-# General -- linak-control
+# General -- lever
 <!-- Conventions, naming rules, code style, git workflow. Updated: 2026-04-02 -->
 
 ## Architecture

@@ -1,4 +1,4 @@
-# linak-control
+# lever
 
 @~/Kouzou/standards/general.md
 
@@ -9,7 +9,7 @@ macOS menu bar app + CLI for controlling LINAK DPG1C standing desks via BLE. Per
 @docs/ai/memory/memory.md
 
 ## Routing Rules
-<!-- Run /memory-add to capture learnings. Routing reference: docs/ai/memory/routing-reference.md -->
+<!-- Run /memory-add to capture learnings. -->
 - Personal/workflow corrections → global (~/.claude/includes/)
 - Repo conventions/style → docs/ai/memory/general.md
 - Tool/CI/build knowledge → docs/ai/memory/tools.md

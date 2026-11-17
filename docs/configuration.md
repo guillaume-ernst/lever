@@ -4,7 +4,7 @@ Reference for every user-configurable option in `~/Library/Application Support/L
 
 ## Where settings live
 
-LinakControl persists all user-facing settings in a single JSON file:
+Lever persists all user-facing settings in a single JSON file:
 
 ```
 ~/Library/Application Support/LinakControl/config.json
