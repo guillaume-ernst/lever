@@ -33,7 +33,7 @@ public enum FileLog {
     ///   linked-class check is the reliable detection here.
     static let isRunningUnderTest = NSClassFromString("XCTestCase") != nil
 
-    private static var logURL: URL? = {
+    private static let logURL: URL? = {
         // Never touch the user's real diagnostic log from a test process
         // (issue #18). The suite would otherwise interleave fixture events —
         // including fabricated E16/E26 faults that never happened on any
@@ -56,9 +56,24 @@ public enum FileLog {
         queue.sync {}
     }
 
+    /// Box for the persistent log handle. The serial `queue` already orders
+    /// writes; the lock makes the shared mutable state concurrency-safe by
+    /// construction under Swift 6 rather than by convention alone.
+    private final class FileHandleBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var handle: FileHandle?
+
+        /// Runs `body` with exclusive access to the stored handle.
+        func withHandle<T>(_ body: (inout FileHandle?) -> T) -> T {
+            lock.lock()
+            defer { lock.unlock() }
+            return body(&handle)
+        }
+    }
+
     /// Persistent file handle — opened once, reused for all writes.
     /// Avoids file-descriptor churn at ~10Hz during desk movement.
-    private static var fileHandle: FileHandle?
+    private static let fileHandleBox = FileHandleBox()
 
     /// Write a single event-level log line. Active in **all** build
     /// configurations (release included) so diagnostics — such as raw desk
@@ -85,12 +100,14 @@ public enum FileLog {
 
         queue.async {
             guard let url = logURL else { return }
-            guard var handle = openHandleIfNeeded(url: url) else { return }
-            if handle.seekToEndOfFile() > maxBytes {
-                guard let rotated = rotate(url: url) else { return }
-                handle = rotated
+            fileHandleBox.withHandle { fileHandle in
+                guard var handle = openHandleIfNeeded(url: url, into: &fileHandle) else { return }
+                if handle.seekToEndOfFile() > maxBytes {
+                    guard let rotated = rotate(url: url, into: &fileHandle) else { return }
+                    handle = rotated
+                }
+                handle.write(Data(line.utf8))
             }
-            handle.write(Data(line.utf8))
         }
     }
 
@@ -99,11 +116,11 @@ public enum FileLog {
     /// Must be called on `queue`, which serialises it against every write.
     ///
     /// - Returns: a handle on the fresh file, or nil if it could not be opened.
-    private static func rotate(url: URL) -> FileHandle? {
+    private static func rotate(url: URL, into fileHandle: inout FileHandle?) -> FileHandle? {
         fileHandle?.closeFile()
         fileHandle = nil
         rotateFile(at: url)
-        return openHandleIfNeeded(url: url)
+        return openHandleIfNeeded(url: url, into: &fileHandle)
     }
 
     /// Renames the log at `url` to `<url>.1`, replacing any previous rotated
@@ -122,7 +139,7 @@ public enum FileLog {
 
     /// Opens or returns the existing persistent file handle.
     /// Creates the file with 0600 permissions if it doesn't exist.
-    private static func openHandleIfNeeded(url: URL) -> FileHandle? {
+    private static func openHandleIfNeeded(url: URL, into fileHandle: inout FileHandle?) -> FileHandle? {
         if let handle = fileHandle { return handle }
         if !FileManager.default.fileExists(atPath: url.path) {
             FileManager.default.createFile(

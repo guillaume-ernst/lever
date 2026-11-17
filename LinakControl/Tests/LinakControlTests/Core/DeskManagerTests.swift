@@ -350,17 +350,18 @@ final class DeskManagerStateStreamTests: XCTestCase {
         configureHappyPath(mock)
         let manager = DeskManager(bleController: mock, configStore: makeTempConfigStore())
 
-        var receivedStates: [ConnectionState] = []
         let streamTask = Task {
+            var receivedStates: [ConnectionState] = []
             for await state in await manager.stateStream {
                 receivedStates.append(state.connectionState)
                 if state.connectionState == .connected { break }
             }
+            return receivedStates
         }
 
         try await manager.connect(peripheralId: UUID())
         streamTask.cancel()
-        await streamTask.value
+        let receivedStates = await streamTask.value
 
         XCTAssertTrue(
             receivedStates.contains(.connecting),
@@ -378,16 +379,17 @@ final class DeskManagerStateStreamTests: XCTestCase {
         let manager = DeskManager(bleController: mock, configStore: makeTempConfigStore())
         try await manager.connect(peripheralId: UUID())
 
-        var receivedStates: [ConnectionState] = []
         let streamTask = Task {
+            var receivedStates: [ConnectionState] = []
             for await state in await manager.stateStream {
                 receivedStates.append(state.connectionState)
                 if state.connectionState == .disconnected { break }
             }
+            return receivedStates
         }
 
         await manager.disconnect()
-        await streamTask.value
+        let receivedStates = await streamTask.value
 
         XCTAssertTrue(
             receivedStates.contains(.disconnected),

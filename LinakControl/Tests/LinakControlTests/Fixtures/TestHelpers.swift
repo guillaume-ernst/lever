@@ -44,6 +44,7 @@ func makeTempConfigStore(
 /// `await` isn't sufficient due to background task scheduling.
 func waitFor(
     timeout: TimeInterval = 2.0,
+    isolation: isolated (any Actor)? = #isolation,
     predicate: @escaping () async -> Bool
 ) async {
     let deadline = ContinuousClock.now.advanced(by: .seconds(timeout))

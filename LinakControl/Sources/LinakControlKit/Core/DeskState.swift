@@ -3,7 +3,7 @@
 
 // MARK: - ConnectionState
 
-public enum ConnectionState: Equatable {
+public enum ConnectionState: Equatable, Sendable {
     case disconnected
     case scanning
     case connecting
@@ -12,14 +12,14 @@ public enum ConnectionState: Equatable {
 
 // MARK: - MoveDirection
 
-public enum MoveDirection {
+public enum MoveDirection: Sendable {
     case up
     case down
 }
 
 // MARK: - PresetPosition
 
-public struct PresetPosition {
+public struct PresetPosition: Sendable {
     public let index: Int
     public var heightMM: Int?
     public var label: String?
@@ -33,7 +33,7 @@ public struct PresetPosition {
 
 // MARK: - DeskState
 
-public struct DeskState {
+public struct DeskState: Sendable {
     public var connectionState: ConnectionState
     public var deskName: String?
     public var heightMM: Int?

@@ -9,6 +9,10 @@ import AppKit
 // MARK: - Protocol
 
 /// Manages global keyboard shortcuts for desk control.
+///
+/// Isolated to the main actor: `NSEvent` global monitors must be installed
+/// and removed on the main thread, so every conformer shares that isolation.
+@MainActor
 public protocol HotkeyManaging {
     func enable()
     func disable()

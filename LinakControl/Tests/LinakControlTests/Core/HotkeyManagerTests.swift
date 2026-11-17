@@ -7,6 +7,7 @@ import XCTest
 // MARK: - MockHotkeyManager
 
 /// In-memory HotkeyManaging stub for testing consumers that depend on the protocol.
+@MainActor
 final class MockHotkeyManager: HotkeyManaging {
     private(set) var enableCallCount = 0
     private(set) var disableCallCount = 0
@@ -31,6 +32,7 @@ final class MockHotkeyManager: HotkeyManaging {
 
 // MARK: - MockHotkeyManager Protocol Tests
 
+@MainActor
 final class MockHotkeyManagerTests: XCTestCase {
 
     func testEnableSetIsEnabledTrue() {

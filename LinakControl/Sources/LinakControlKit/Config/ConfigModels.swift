@@ -7,7 +7,7 @@ import Foundation
 
 /// Persisted application settings. Stored as config.json in
 /// ~/Library/Application Support/LinakControl/.
-public struct AppConfig: Codable, Equatable {
+public struct AppConfig: Codable, Equatable, Sendable {
 
     // MARK: Pairing
 
@@ -158,7 +158,7 @@ public struct AppConfig: Codable, Equatable {
 // MARK: - HeightUnit
 
 /// Height display unit.
-public enum HeightUnit: String, Codable {
+public enum HeightUnit: String, Codable, Sendable {
     case cm
     case inch
 }
@@ -166,7 +166,7 @@ public enum HeightUnit: String, Codable {
 // MARK: - RunMode
 
 /// Movement button behaviour.
-public enum RunMode: String, Codable {
+public enum RunMode: String, Codable, Sendable {
     /// Hold the button to keep moving (release to stop).
     case manual
 

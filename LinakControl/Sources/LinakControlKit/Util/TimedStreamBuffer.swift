@@ -15,7 +15,12 @@ internal actor TimedStreamBuffer {
 
     /// Box that holds the mutable iterator. Actors cannot call mutating methods
     /// on stored value-type properties, so we wrap in a reference type.
-    private final class IteratorBox {
+    ///
+    /// `@unchecked Sendable` is safe here by construction: `next()` shares the
+    /// box with exactly one task-group child per call (the sibling child only
+    /// sleeps), and callers consume the buffer sequentially — the iterator is
+    /// never touched from two tasks at once.
+    private final class IteratorBox: @unchecked Sendable {
         var iterator: AsyncStream<Data>.AsyncIterator
         init(_ stream: AsyncStream<Data>) { iterator = stream.makeAsyncIterator() }
         func next() async -> Data? { await iterator.next() }

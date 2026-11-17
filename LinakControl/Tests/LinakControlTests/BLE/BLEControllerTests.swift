@@ -26,18 +26,19 @@ final class BLEStateTests: XCTestCase {
 
     func testStateStreamReceivesEmittedValues() async {
         let mock = MockBLEController()
-        var received: [BLEState] = []
 
         let task = Task {
+            var received: [BLEState] = []
             for await state in mock.stateStream {
                 received.append(state)
                 if received.count == 2 { break }
             }
+            return received
         }
 
         mock.emitState(.poweredOn)
         mock.emitState(.poweredOff)
-        await task.value
+        let received = await task.value
 
         XCTAssertEqual(received, [.poweredOn, .poweredOff])
     }

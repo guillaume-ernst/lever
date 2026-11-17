@@ -19,7 +19,7 @@ private final class TestSocketServer {
     }
 
     /// Start listening. Blocks until the socket is bound and ready to accept connections.
-    func start(handler: @escaping (IPCRequest) throws -> IPCResponse) throws {
+    func start(handler: @escaping @Sendable (IPCRequest) throws -> IPCResponse) throws {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw TestServerError.socketFailed }
 
@@ -322,10 +322,13 @@ final class IPCClientRoundTripTests: XCTestCase {
     }
 
     func testRequestIsFramedCorrectly_serverReceivesValidJSON() throws {
-        var receivedRequest: IPCRequest?
+        // Boxed so it can cross the server's handler thread — the write happens
+        // before the response goes on the wire, so the client's read orders after it.
+        final class Box: @unchecked Sendable { var request: IPCRequest? }
+        let received = Box()
         let server = TestSocketServer()
         try server.start { request in
-            receivedRequest = request
+            received.request = request
             return makeStatusResponse(id: request.id, status: makeStatusResult())
         }
         defer { server.stop() }
@@ -333,9 +336,9 @@ final class IPCClientRoundTripTests: XCTestCase {
         let client = makeClient(socketPath: server.socketPath)
         _ = try client.getStatus()
 
-        XCTAssertNotNil(receivedRequest)
-        XCTAssertEqual(receivedRequest?.method, .getStatus)
-        XCTAssertFalse(receivedRequest?.id.isEmpty ?? true)
+        XCTAssertNotNil(received.request)
+        XCTAssertEqual(received.request?.method, .getStatus)
+        XCTAssertFalse(received.request?.id.isEmpty ?? true)
     }
 }
 

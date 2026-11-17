@@ -10,7 +10,7 @@ import Foundation
 /// Default storage location: `~/Library/Application Support/LinakControl/`
 /// The directory is created on first save with mode 0o700;
 /// the file is written with mode 0o600.
-public final class ConfigStore {
+public final class ConfigStore: Sendable {
 
     // MARK: Properties
 

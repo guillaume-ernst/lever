@@ -3,6 +3,13 @@
 
 import CoreBluetooth
 
+// MARK: - CBUUID Sendable conformance
+
+/// `CBUUID` is immutable after construction — safe to share across isolation
+/// domains. CoreBluetooth predates Sendable annotations, so the conformance
+/// is declared retroactively here.
+extension CBUUID: @retroactive @unchecked Sendable {}
+
 // MARK: - UUIDs
 
 /// All BLE service and characteristic UUIDs for the LINAK DPG1C desk.
