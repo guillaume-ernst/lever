@@ -169,3 +169,47 @@ final class SetStartAtLoginTests: XCTestCase {
         XCTAssertFalse(saved.startAtLogin)
     }
 }
+
+// MARK: - updateStartAtLogin (Settings toggle path)
+//
+// The Settings toggle calls updateStartAtLogin — it must propagate to
+// SMAppService immediately, not merely persist the flag.
+
+@MainActor
+final class UpdateStartAtLoginTests: XCTestCase {
+
+    func testUpdateStartAtLoginTrueCallsRegister() {
+        let mock = MockLoginItemManager()
+        let store = makeTempConfigStore()
+        let viewModel = makeViewModel(store: store, loginItemManager: mock)
+
+        viewModel.updateStartAtLogin(true)
+
+        XCTAssertEqual(mock.registerCallCount, 1)
+        XCTAssertEqual(mock.unregisterCallCount, 0)
+    }
+
+    func testUpdateStartAtLoginFalseCallsUnregister() {
+        let mock = MockLoginItemManager()
+        let store = makeTempConfigStore(config: AppConfig(startAtLogin: true))
+        let viewModel = makeViewModel(store: store, loginItemManager: mock)
+
+        viewModel.updateStartAtLogin(false)
+
+        XCTAssertEqual(mock.unregisterCallCount, 1)
+        XCTAssertEqual(mock.registerCallCount, 0)
+    }
+
+    func testUpdateStartAtLoginPersistsFlag() async throws {
+        let mock = MockLoginItemManager()
+        let store = makeTempConfigStore()
+        let viewModel = makeViewModel(store: store, loginItemManager: mock)
+
+        viewModel.updateStartAtLogin(true)
+        try await Task.sleep(for: .milliseconds(50))
+
+        let saved = try store.load()
+        XCTAssertTrue(saved.startAtLogin)
+        XCTAssertTrue(viewModel.startAtLogin)
+    }
+}

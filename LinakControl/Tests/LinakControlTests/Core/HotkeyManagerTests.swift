@@ -194,3 +194,72 @@ final class HotkeyManagerConfigIntegrationTests: XCTestCase {
         XCTAssertTrue(loaded.hotkeysEnabled)
     }
 }
+
+// MARK: - DeskViewModel Hotkey Toggle Propagation Tests
+//
+// The Settings toggle calls updateHotkeysEnabled — it must arm/disarm the
+// live monitor immediately, not merely persist the flag for next launch.
+
+@MainActor
+final class DeskViewModelHotkeyToggleTests: XCTestCase {
+
+    @MainActor
+    private func makeViewModel(
+        store: ConfigStore,
+        hotkeyManager: HotkeyManaging?
+    ) -> DeskViewModel {
+        let manager = DeskManager(bleController: MockBLEController(), configStore: store)
+        return DeskViewModel(
+            deskManager: manager,
+            configStore: store,
+            loginItemManager: MockLoginItemManager(),
+            hotkeyManager: hotkeyManager
+        )
+    }
+
+    func testUpdateHotkeysEnabledTrueCallsEnable() {
+        let mock = MockHotkeyManager()
+        let viewModel = makeViewModel(store: makeTempConfigStore(), hotkeyManager: mock)
+
+        viewModel.updateHotkeysEnabled(true)
+
+        XCTAssertEqual(mock.enableCallCount, 1)
+        XCTAssertEqual(mock.disableCallCount, 0)
+        XCTAssertTrue(viewModel.hotkeysEnabled)
+    }
+
+    func testUpdateHotkeysEnabledFalseCallsDisable() {
+        let mock = MockHotkeyManager()
+        let store = makeTempConfigStore(config: AppConfig(hotkeysEnabled: true))
+        let viewModel = makeViewModel(store: store, hotkeyManager: mock)
+
+        viewModel.updateHotkeysEnabled(false)
+
+        XCTAssertEqual(mock.disableCallCount, 1)
+        XCTAssertEqual(mock.enableCallCount, 0)
+        XCTAssertFalse(viewModel.hotkeysEnabled)
+    }
+
+    func testUpdateHotkeysEnabledPersistsFlag() async throws {
+        let mock = MockHotkeyManager()
+        let store = makeTempConfigStore()
+        let viewModel = makeViewModel(store: store, hotkeyManager: mock)
+
+        viewModel.updateHotkeysEnabled(true)
+        try await Task.sleep(for: .milliseconds(50))
+
+        let saved = try store.load()
+        XCTAssertTrue(saved.hotkeysEnabled)
+    }
+
+    /// Without an injected manager (e.g. tests, previews) the toggle must not crash.
+    func testUpdateHotkeysEnabledWithoutManagerDoesNotCrash() {
+        let store = makeTempConfigStore()
+        let viewModel = makeViewModel(store: store, hotkeyManager: nil)
+
+        viewModel.updateHotkeysEnabled(true)
+        viewModel.updateHotkeysEnabled(false)
+
+        XCTAssertFalse(viewModel.hotkeysEnabled)
+    }
+}

@@ -72,6 +72,7 @@ public final class DeskViewModel: ObservableObject {
     private let deskManager: DeskManager
     private let configStore: ConfigStore
     private let loginItemManager: LoginItemManaging
+    private let hotkeyManager: HotkeyManaging?
     private var stateTask: Task<Void, Never>?
     private var scanTask: Task<Void, Never>?
 
@@ -88,11 +89,13 @@ public final class DeskViewModel: ObservableObject {
     public init(
         deskManager: DeskManager,
         configStore: ConfigStore,
-        loginItemManager: LoginItemManaging = LoginItemManager()
+        loginItemManager: LoginItemManaging = LoginItemManager(),
+        hotkeyManager: HotkeyManaging? = nil
     ) {
         self.deskManager = deskManager
         self.configStore = configStore
         self.loginItemManager = loginItemManager
+        self.hotkeyManager = hotkeyManager
         let config = (try? configStore.load()) ?? .default
         isFirstRun = config.pairedDeskUUID == nil
         unit = config.unit
@@ -305,17 +308,21 @@ public final class DeskViewModel: ObservableObject {
         persistConfig { $0.autoRunDown = mode }
     }
 
-    /// Updates the start-at-login setting and persists to config (no SMAppService side-effect).
-    ///
-    /// Use `setStartAtLogin(_:)` when SMAppService registration is also required.
+    /// Updates the start-at-login setting: registers or unregisters the login
+    /// item via SMAppService immediately, then persists to config.
     public func updateStartAtLogin(_ enabled: Bool) {
-        startAtLogin = enabled
-        persistConfig { $0.startAtLogin = enabled }
+        setStartAtLogin(enabled)
     }
 
-    /// Updates the global-hotkeys setting and persists to config.
+    /// Updates the global-hotkeys setting: enables or disables the live
+    /// keystroke monitor immediately, then persists to config.
     public func updateHotkeysEnabled(_ enabled: Bool) {
         hotkeysEnabled = enabled
+        if enabled {
+            hotkeyManager?.enable()
+        } else {
+            hotkeyManager?.disable()
+        }
         persistConfig { $0.hotkeysEnabled = enabled }
     }
 

@@ -35,7 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         try? ipcServer.start()
 
         let loginItemManager = LoginItemManager()
-        viewModel = DeskViewModel(deskManager: deskManager, configStore: configStore, loginItemManager: loginItemManager)
+        hotkeyManager = HotkeyManager(deskManager: deskManager, configStore: configStore)
+        viewModel = DeskViewModel(
+            deskManager: deskManager,
+            configStore: configStore,
+            loginItemManager: loginItemManager,
+            hotkeyManager: hotkeyManager
+        )
         menuBarController = MenuBarController(viewModel: viewModel)
         menuBarController.setup(autoOpen: viewModel.isFirstRun)
 
@@ -55,14 +61,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await deskManager.startWakeObserver()
         }
 
-        hotkeyManager = HotkeyManager(deskManager: deskManager, configStore: configStore)
-
         Task {
             let config = try? configStore.load()
 
-            // Sync login item registration with persisted preference.
+            // Sync login item registration with persisted preference — both
+            // directions, so a stale registration from a toggled-off session
+            // (or a missed unregister) is reconciled at launch.
             if config?.startAtLogin == true {
                 try? loginItemManager.register()
+            } else {
+                try? loginItemManager.unregister()
             }
 
             // Enable global hotkeys if the user previously activated them.
