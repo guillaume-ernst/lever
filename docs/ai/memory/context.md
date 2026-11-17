@@ -8,7 +8,10 @@ network and rebranded to **Lever** (`guillaume-ernst/lever`). Product/bundle is
 Lever (`Lever.app`, `Lever.xcodeproj`, scheme `LeverApp`,
 `com.guillaumeernst.Lever`); internals kept the LinakControl names
 (`LinakControlKit`, `deskctl`, `~/Library/Application Support/LinakControl`).
-Swift 6 language mode, 496 tests green.
+Swift 6 language mode, 504 tests green. UI is localized: `fr.lproj`/
+`Localizable.strings` + `InfoPlist.strings` in `LinakControl/Sources/App/
+Resources` (keys = English literals; SPM target excludes `Resources/` —
+app-bundle concern only). deskctl output stays English for scripts.
 
 Design context captured via Impeccable: `PRODUCT.md` (product truth) and
 `DESIGN.md` + `.impeccable/design.json` ("The Built-in Instrument" — pure
@@ -27,7 +30,10 @@ presets, `Add Preset…`, `Settings…`); right-click opens the popover.
 `targetSoftwarePresetID` alongside Int hardware state; management in
 Settings (rename, repoint-to-current, delete, reorder arrows); full
 IPC/`deskctl` parity (`preset <name>`, `add`/`remove`/`rename`, `--save`
-repoints).
+repoints). Software presets also render in the popover under the grid;
+names are unique case-insensitively (`DeskError.softwarePresetNameTaken`,
+`DeskError` now has `errorDescription`); inline rename commits on focus
+loss; generated names fill gaps via `uniquePresetName` (nonisolated).
 
 ## Known Issues
 
