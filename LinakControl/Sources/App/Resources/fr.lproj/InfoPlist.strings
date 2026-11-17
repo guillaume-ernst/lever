@@ -1,0 +1,3 @@
+/* InfoPlist.strings — French (fr)
+ * Localized values for keys declared in Info.plist (permission prompts). */
+"NSBluetoothAlwaysUsageDescription" = "Lever a besoin du Bluetooth pour communiquer avec votre bureau réglable LINAK.";

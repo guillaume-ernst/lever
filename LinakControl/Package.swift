@@ -28,7 +28,10 @@ let package = Package(
             name: "LinakControl",
             dependencies: ["LinakControlKit"],
             path: "Sources/App",
-            exclude: ["Info.plist"]
+            // Localizable/InfoPlist .strings are Xcode-app resources, not
+            // package resources — keep them out of the SPM target (which has
+            // no defaultLocalization and doesn't need one).
+            exclude: ["Info.plist", "Resources"]
         ),
         // CLI tool
         .executableTarget(

@@ -26,8 +26,8 @@ public final class NotificationService: NotificationPosting {
 
     public func postDisconnected() {
         let content = UNMutableNotificationContent()
-        content.title = "Desk Disconnected"
-        content.body = "Reconnecting..."
+        content.title = String(localized: "Desk Disconnected")
+        content.body = String(localized: "Reconnecting...")
         let request = UNNotificationRequest(
             identifier: "desk-disconnected",
             content: content,
@@ -38,7 +38,7 @@ public final class NotificationService: NotificationPosting {
 
     public func postConnected() {
         let content = UNMutableNotificationContent()
-        content.title = "Desk Connected"
+        content.title = String(localized: "Desk Connected")
         let request = UNNotificationRequest(
             identifier: "desk-connected",
             content: content,
@@ -49,7 +49,7 @@ public final class NotificationService: NotificationPosting {
 
     public func postNeedsReference(body: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Desk Not Moving"
+        content.title = String(localized: "Desk Not Moving")
         content.body = body
         let request = UNNotificationRequest(
             identifier: "desk-needs-reference",

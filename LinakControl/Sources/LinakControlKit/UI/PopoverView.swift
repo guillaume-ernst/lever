@@ -119,11 +119,11 @@ private struct DisconnectedContent: View {
     }
 
     private var stateTitle: String {
-        if viewModel.needsReference { return "Desk Paused" }
+        if viewModel.needsReference { return String(localized: "Desk Paused") }
         switch viewModel.connectionState {
-        case .scanning: return "Scanning..."
-        case .connecting: return "Connecting..."
-        default: return "Disconnected"
+        case .scanning: return String(localized: "Scanning...")
+        case .connecting: return String(localized: "Connecting...")
+        default: return String(localized: "Disconnected")
         }
     }
 
@@ -131,11 +131,11 @@ private struct DisconnectedContent: View {
         // After a fault the app stands down so the desk can be initialised on the
         // control box; tell the user what happened and how to resume.
         if viewModel.needsReference {
-            return "\(viewModel.faultMessage) Initialise it on the control box, then Reconnect or move the desk."
+            return String(localized: "\(viewModel.faultMessage) Initialise it on the control box, then Reconnect or move the desk.")
         }
         switch viewModel.connectionState {
-        case .scanning, .connecting: return "Looking for your desk"
-        default: return "Reconnecting..."
+        case .scanning, .connecting: return String(localized: "Looking for your desk")
+        default: return String(localized: "Reconnecting...")
         }
     }
 }

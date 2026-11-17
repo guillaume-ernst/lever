@@ -137,20 +137,23 @@ public final class MenuBarController: NSObject {
             let config = NSImage.SymbolConfiguration(paletteColors: [.systemOrange])
             let warning = NSImage(
                 systemSymbolName: "exclamationmark.triangle.fill",
-                accessibilityDescription: "Desk fault"
+                accessibilityDescription: String(localized: "Desk fault")
             )?.withSymbolConfiguration(config)
             warning?.isTemplate = false
             button.image = warning
             button.toolTip = viewModel.faultMessage
         } else if viewModel.showZone2 {
             button.image = nil
-            button.toolTip = "Left-click: presets · Right-click: desk controls"
+            button.toolTip = String(localized: "Left-click: presets · Right-click: desk controls")
         } else {
             // Readout hidden by preference — fall back to the bare desk icon.
-            button.image = NSImage(systemSymbolName: "table.furniture", accessibilityDescription: "Desk")
+            button.image = NSImage(
+                systemSymbolName: "table.furniture",
+                accessibilityDescription: String(localized: "Desk")
+            )
             button.image?.isTemplate = true
             button.alphaValue = viewModel.connectionState == .connected ? 1.0 : 0.7
-            button.toolTip = "Left-click: presets · Right-click: desk controls"
+            button.toolTip = String(localized: "Left-click: presets · Right-click: desk controls")
         }
 
         button.imagePosition = viewModel.showZone2 ? .imageLeft : .imageOnly
@@ -199,8 +202,8 @@ public final class MenuBarController: NSObject {
         }
         menu.addItem(.separator())
         let addTitle = viewModel.heightDisplay == "—"
-            ? "Add Preset"
-            : "Add Preset at \(viewModel.heightDisplay)"
+            ? String(localized: "Add Preset")
+            : String(localized: "Add Preset at \(viewModel.heightDisplay)")
         let add = NSMenuItem(
             title: addTitle,
             action: #selector(addSoftwarePresetSelected),
@@ -211,7 +214,7 @@ public final class MenuBarController: NSObject {
         menu.addItem(add)
         menu.addItem(.separator())
         let settings = NSMenuItem(
-            title: "Settings…",
+            title: String(localized: "Settings…"),
             action: #selector(settingsMenuItemSelected),
             keyEquivalent: ""
         )
@@ -221,30 +224,42 @@ public final class MenuBarController: NSObject {
     }
 
     private func presetMenuItem(for preset: PresetPosition) -> NSMenuItem {
-        let heightText = preset.heightMM.map { HeightConverter.display(mm: $0, unit: viewModel.unit) } ?? "+ Add"
-        let prefix = (preset.index == viewModel.targetPreset) ? "→ " : ""
-        let title = "\(prefix)\(preset.index)  \(heightText)"
+        let heightText = preset.heightMM.map { HeightConverter.display(mm: $0, unit: viewModel.unit) }
+            ?? String(localized: "+ Add")
+        let title = "\(preset.index)  \(heightText)"
 
         let item = NSMenuItem(title: title, action: #selector(presetMenuItemSelected(_:)), keyEquivalent: "")
         item.tag = preset.index
         item.target = self
         item.state = (preset.index == viewModel.activePreset) ? .on : .off
+        markIfMoving(item, targeted: preset.index == viewModel.targetPreset)
         return item
     }
 
     private func softwarePresetMenuItem(for preset: SoftwarePreset) -> NSMenuItem {
         let heightText = HeightConverter.display(mm: preset.heightMM, unit: viewModel.unit)
-        let prefix = (preset.id == viewModel.targetSoftwarePresetID) ? "→ " : ""
 
         let item = NSMenuItem(
-            title: "\(prefix)\(preset.name)  \(heightText)",
+            title: "\(preset.name)  \(heightText)",
             action: #selector(softwarePresetMenuItemSelected(_:)),
             keyEquivalent: ""
         )
         item.representedObject = preset.id.uuidString
         item.target = self
         item.state = (preset.id == viewModel.activeSoftwarePresetID) ? .on : .off
+        markIfMoving(item, targeted: preset.id == viewModel.targetSoftwarePresetID)
         return item
+    }
+
+    /// In-motion marker: an SF Symbol in the item's image gutter rather than
+    /// an ASCII prefix hacked into the title (the checkmark column stays free
+    /// for the active state).
+    private func markIfMoving(_ item: NSMenuItem, targeted: Bool) {
+        guard targeted else { return }
+        item.image = NSImage(
+            systemSymbolName: "arrow.right",
+            accessibilityDescription: String(localized: "Moving")
+        )
     }
 
     @objc private func presetMenuItemSelected(_ sender: NSMenuItem) {

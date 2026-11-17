@@ -1,0 +1,112 @@
+/* Localizable.strings — French (fr)
+ * Lever — keys are the English source literals; missing keys fall back to
+ * the key itself, so this file only carries translated entries.
+ * Québec French conventions: DEL for LED, « » quotes, espace fine before ?/!.
+ */
+
+// MARK: - Menu bar item
+"Left-click: presets · Right-click: desk controls" = "Clic gauche : préréglages · Clic droit : contrôles du bureau";
+"Desk" = "Bureau";
+"Desk fault" = "Défaillance du bureau";
+"Add Preset" = "Ajouter un préréglage";
+"Add Preset at %@" = "Ajouter un préréglage à %@";
+"Settings…" = "Réglages…";
+"+ Add" = "+ Ajouter";
+"Moving" = "En mouvement";
+
+// MARK: - Popover
+"Desk Paused" = "Bureau en pause";
+"Scanning..." = "Recherche…";
+"Connecting..." = "Connexion…";
+"Disconnected" = "Déconnecté";
+"%@ Initialise it on the control box, then Reconnect or move the desk." = "%@ Initialisez-le depuis le boîtier de commande, puis reconnectez ou déplacez le bureau.";
+"Looking for your desk" = "Recherche de votre bureau";
+"Reconnecting..." = "Reconnexion…";
+"Reconnect" = "Reconnecter";
+"Retry" = "Réessayer";
+"Disconnect" = "Déconnecter";
+"Disconnect from the desk" = "Déconnecter le bureau";
+
+// MARK: - Presets (grid + list)
+"Moving..." = "Déplacement…";
+"Double-click to move to %@" = "Double-cliquez pour aller à %@";
+"Double-click to save the current height as preset %lld" = "Double-cliquez pour enregistrer la hauteur actuelle comme préréglage %lld";
+"Preset %lld" = "Préréglage %lld";
+
+// MARK: - Settings
+"Back" = "Retour";
+"Settings" = "Réglages";
+"Display Unit" = "Unité d'affichage";
+"Unit" = "Unité";
+"Desk Offset" = "Décalage du bureau";
+"Offset:" = "Décalage :";
+"Apply" = "Appliquer";
+"Height at lowest desk position" = "Hauteur à la position la plus basse du bureau";
+"Movement Mode" = "Mode de déplacement";
+"Up:" = "Montée :";
+"Up mode" = "Mode montée";
+"Down:" = "Descente :";
+"Down mode" = "Mode descente";
+"hold" = "manuel";
+"auto" = "auto";
+"Presets" = "Préréglages";
+"Software" = "Logiciels";
+"Save current" = "Enregistrer l'actuelle";
+"Replace preset %lld (%@) with the current height?" = "Remplacer le préréglage %lld (%@) par la hauteur actuelle ?";
+"Replace" = "Remplacer";
+"Cancel" = "Annuler";
+"Name" = "Nom";
+"Move preset up" = "Déplacer le préréglage vers le haut";
+"Move preset down" = "Déplacer le préréglage vers le bas";
+"Set to the desk's current height" = "Régler à la hauteur actuelle du bureau";
+"Delete this preset" = "Supprimer ce préréglage";
+"Delete preset \"%@\"?" = "Supprimer le préréglage « %@ » ?";
+"Delete" = "Supprimer";
+"Add preset" = "Ajouter un préréglage";
+"Add preset at %@" = "Ajouter un préréglage à %@";
+"Connection" = "Connexion";
+"Desk:" = "Bureau :";
+"Unknown" = "Inconnu";
+"Forget & Re-scan" = "Oublier et rechercher";
+"Forget %@ and scan again?" = "Oublier %@ et relancer la recherche ?";
+"this desk" = "ce bureau";
+"Forget" = "Oublier";
+"Pairing is lost — the controller must be in pairing mode (blue LED) to connect again." = "L'appairage sera perdu — le contrôleur doit être en mode d'appairage (DEL bleue) pour se reconnecter.";
+"Start at login" = "Ouvrir au démarrage";
+"Global hotkeys" = "Raccourcis globaux";
+"Show height in menu bar" = "Afficher la hauteur dans la barre des menus";
+"About Lever v%@" = "À propos de Lever v%@";
+"Quit" = "Quitter";
+
+// MARK: - Movement controls
+"(auto)" = "(auto)";
+"(hold)" = "(manuel)";
+"Stop" = "Arrêter";
+"Move up" = "Monter";
+"Move down" = "Descendre";
+"Ready" = "Prêt";
+
+// MARK: - First run
+"Control your LINAK desk from the menu bar." = "Contrôlez votre bureau LINAK depuis la barre des menus.";
+"Before scanning, activate Bluetooth pairing on your desk controller until the pairing indicator turns blue." = "Avant la recherche, activez le mode d'appairage Bluetooth sur le contrôleur du bureau jusqu'à ce que l'indicateur devienne bleu.";
+"Scan for Desk" = "Rechercher un bureau";
+"Scanning for desks…" = "Recherche de bureaux…";
+"Searching for desks nearby…" = "Recherche de bureaux à proximité…";
+"Still searching — is the controller's pairing LED blue?" = "Toujours en recherche — la DEL d'appairage du contrôleur est-elle bleue ?";
+"Tap a desk to connect." = "Cliquez sur un bureau pour vous connecter.";
+"Connecting to %@…" = "Connexion à %@…";
+"desk" = "votre bureau";
+"Connected!" = "Connecté !";
+"Your desk" = "Votre bureau";
+"Current height: %@" = "Hauteur actuelle : %@";
+"Tip: Save your current position as a preset in Settings." = "Astuce : enregistrez votre position actuelle comme préréglage dans Réglages.";
+"Done" = "Terminé";
+
+// MARK: - Notifications & faults
+"Desk Disconnected" = "Bureau déconnecté";
+"Desk Connected" = "Bureau connecté";
+"Desk Not Moving" = "Le bureau ne bouge pas";
+"The desk needs to be re-initialised — hold DOWN until it reaches the bottom and resets." = "Le bureau doit être réinitialisé — maintenez la touche Descendre jusqu'à ce qu'il atteigne le bas.";
+"The desk needs a reset on the control box (E16)." = "Le bureau nécessite une réinitialisation sur le boîtier de commande (E16).";
+"Possible hardware fault in a desk leg — check the cables (E26)." = "Défaillance matérielle possible dans un pied du bureau — vérifiez les câbles (E26).";
+"The desk stopped responding." = "Le bureau ne répond plus.";

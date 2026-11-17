@@ -109,10 +109,10 @@ public enum DeskProtocol {
     /// Short user-facing summary for a fault code (for notifications / banners).
     public static func faultSummary(code: UInt8?) -> String {
         switch code {
-        case 0x1d: return "The desk needs to be re-initialised — hold DOWN until it reaches the bottom and resets."
-        case 0x1e: return "The desk needs a reset on the control box (E16)."
-        case 0x17: return "Possible hardware fault in a desk leg — check the cables (E26)."
-        default:   return "The desk stopped responding."
+        case 0x1d: return String(localized: "The desk needs to be re-initialised — hold DOWN until it reaches the bottom and resets.")
+        case 0x1e: return String(localized: "The desk needs a reset on the control box (E16).")
+        case 0x17: return String(localized: "Possible hardware fault in a desk leg — check the cables (E26).")
+        default:   return String(localized: "The desk stopped responding.")
         }
     }
 

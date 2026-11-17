@@ -9,8 +9,10 @@
 /* Begin PBXBuildFile section */
 		1E0999A5846A7502D162265C /* LeverScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D84595CEAA29702C46CB8D0 /* LeverScreenshotTests.swift */; };
 		4C0F3AF6B1836324428E7BA6 /* LinakControlKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5BA6DD0EF86BF3B63B22EA52 /* LinakControlKit */; };
+		5A919D65861EFE258B397DD7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86AB8BDBF50CB1F32A3E88F5 /* InfoPlist.strings */; };
 		5F4F9ED3054C84428E3BD804 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62C92481D50C3809664A0D9F /* Assets.xcassets */; };
 		CB9F669D4DF20B72B88D1242 /* LinakControlApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D018C3A98344521BE9DC279 /* LinakControlApp.swift */; };
+		F695D73D0C01DD7F54CAEE93 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0A6EB3CF0DF952CF8E40D000 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -24,10 +26,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A6EB3CF0DF952CF8E40D000 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1D84595CEAA29702C46CB8D0 /* LeverScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeverScreenshotTests.swift; sourceTree = "<group>"; };
 		4D018C3A98344521BE9DC279 /* LinakControlApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinakControlApp.swift; sourceTree = "<group>"; };
 		62C92481D50C3809664A0D9F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6D59E84BDA206A70B57F3762 /* Lever.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lever.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86AB8BDBF50CB1F32A3E88F5 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		9C092DF8CA86727B0942495E /* LeverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LeverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5CF52BB1CF2C6CC8F0E4F29 /* LinakControl */ = {isa = PBXFileReference; lastKnownFileType = folder; name = LinakControl; path = LinakControl; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -70,6 +74,15 @@
 			);
 			sourceTree = "<group>";
 		};
+		460041F3C130F3D8DE6A4E63 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				86AB8BDBF50CB1F32A3E88F5 /* InfoPlist.strings */,
+				0A6EB3CF0DF952CF8E40D000 /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		60449ED6DABD6CB2F6711EC7 /* UITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -91,6 +104,7 @@
 			children = (
 				62C92481D50C3809664A0D9F /* Assets.xcassets */,
 				4D018C3A98344521BE9DC279 /* LinakControlApp.swift */,
+				460041F3C130F3D8DE6A4E63 /* Resources */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -170,6 +184,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				fr,
 			);
 			mainGroup = 365047CFEBADE7F95CE4C296;
 			minimizedProjectReferenceProxies = 1;
@@ -193,6 +208,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5F4F9ED3054C84428E3BD804 /* Assets.xcassets in Resources */,
+				5A919D65861EFE258B397DD7 /* InfoPlist.strings in Resources */,
+				F695D73D0C01DD7F54CAEE93 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

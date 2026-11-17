@@ -160,7 +160,7 @@ struct FirstRunConnectingView: View {
             ProgressView()
                 .controlSize(.large)
 
-            Text("Connecting to \(viewModel.selectedDeskName ?? "desk")…")
+            Text("Connecting to \(viewModel.selectedDeskName ?? String(localized: "desk"))…")
                 .font(.headline)
                 .multilineTextAlignment(.center)
 
@@ -192,7 +192,7 @@ struct FirstRunCompleteView: View {
                 Text("Connected!")
                     .font(.title2.weight(.semibold))
 
-                Text(viewModel.deskName ?? "Your desk")
+                Text(viewModel.deskName ?? String(localized: "Your desk"))
                     .font(.headline)
                     .foregroundColor(.secondary)
 

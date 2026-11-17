@@ -71,7 +71,7 @@ private struct MovementButton: View {
     }
 
     private var modeLabel: String {
-        mode == .auto ? "(auto)" : "(hold)"
+        mode == .auto ? String(localized: "(auto)") : String(localized: "(hold)")
     }
 
     var body: some View {
@@ -95,11 +95,13 @@ private struct MovementButton: View {
     }
 
     private var accessibilityLabel: String {
-        isMovingThisDirection ? "Stop" : (direction == .up ? "Move up" : "Move down")
+        isMovingThisDirection
+            ? String(localized: "Stop")
+            : (direction == .up ? String(localized: "Move up") : String(localized: "Move down"))
     }
 
     private var accessibilityValue: String {
-        isMovingThisDirection ? "Moving" : "Ready"
+        isMovingThisDirection ? String(localized: "Moving") : String(localized: "Ready")
     }
 
     // MARK: Auto mode button
