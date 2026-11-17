@@ -11,7 +11,7 @@ Feature branch `feat/linak-control-impl` has 65+ commits. Full implementation of
 - First-run pairing flow
 - Auto-reconnect with retry + system wake detection
 - CLI tool (deskctl) via IPC
-- 385 tests
+- 479 tests
 - Code review: all 37 findings addressed
 
 ## Known Issues

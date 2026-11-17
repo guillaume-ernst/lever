@@ -8,7 +8,7 @@
 | `make xcode-build-debug` | Build .app bundle (debug) via xcodegen + xcodebuild |
 | `make xcode-build` | Build .app bundle (release) |
 | `make build` | Build CLI binary via SPM |
-| `make test` | Run 385 tests via SPM |
+| `make test` | Run 479 tests via SPM |
 | `./run.sh` | Kill running instance, build debug, launch app |
 | `./run.sh --clean` | Same but wipes config (first-run pairing mode) |
 

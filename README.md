@@ -18,7 +18,7 @@ macOS menu bar app and CLI for controlling LINAK DPG1C standing desks via Blueto
 
 ## Requirements
 
-macOS 14+ with full Xcode 15+ (Swift 5.9) and [xcodegen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`), plus a LINAK DPG1C-compatible desk. See [docs/installation.md#prerequisites](docs/installation.md#prerequisites) for the full breakdown.
+macOS 14+ with full Xcode 16+ (Swift 6) and [xcodegen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`), plus a LINAK DPG1C-compatible desk. See [docs/installation.md#prerequisites](docs/installation.md#prerequisites) for the full breakdown.
 
 ## Quick Start
 
@@ -80,7 +80,7 @@ make help               # Show all targets
 make xcode-build-debug  # Build .app bundle (debug)
 make xcode-build        # Build .app bundle (release)
 make build              # Build CLI binary via SPM
-make test               # Run test suite (385 tests)
+make test               # Run test suite (479 tests)
 make install            # Install deskctl to /usr/local/bin
 make clean              # Remove build artifacts
 ```
@@ -102,7 +102,7 @@ LinakControl/
       Util/                 # HeightConverter, FileLog, TimedStreamBuffer, Clock
     deskctl/                # CLI tool (swift-argument-parser)
   Tests/
-    LinakControlTests/      # 385 tests across BLE, Core, UI, IPC, Integration
+    LinakControlTests/      # 479 tests across BLE, Core, UI, IPC, Integration
 ```
 
 **Key design decisions:**
@@ -118,7 +118,7 @@ Settings live at `~/Library/Application Support/LinakControl/config.json`. The f
 
 ## Debug Logging
 
-Debug builds write to `~/Library/Logs/LinakControl/debug.log` (truncated per launch, 1 MB cap). Release builds write no log file — see [docs/troubleshooting.md#where-to-look-for-logs](docs/troubleshooting.md#where-to-look-for-logs).
+All builds write to `~/Library/Logs/LinakControl/debug.log`. The log persists across app restarts and rotates to `debug.log.1` at 1 MB, so an intermittent desk fault can be captured after the fact. See [docs/troubleshooting.md#where-to-look-for-logs](docs/troubleshooting.md#where-to-look-for-logs).
 
 ## Protocol Notes
 
@@ -159,4 +159,4 @@ See [docs/spec.md](docs/spec.md) for the full project specification.
 
 Released under the [MIT License](LICENSE) © 2026 Marcus Breiden.
 
-Third-party dependencies and protocol attributions are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+This repository is an independently maintained continuation of [MMoMM-org/linak-control](https://github.com/MMoMM-org/linak-control). Third-party dependencies and protocol attributions are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

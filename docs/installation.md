@@ -17,7 +17,7 @@ Before installing, make sure you have the following.
 
 **Build tools** (`install.sh` checks for these and refuses to run if either is missing)
 
-- **Xcode 15+** with the Swift 5.9 toolchain. A full Xcode install is required — Command Line Tools alone are not sufficient because the `.app` bundle is produced via `xcodebuild` with CoreBluetooth entitlements and an embedded `Info.plist`.
+- **Xcode 16+** with the Swift 6 toolchain. A full Xcode install is required — Command Line Tools alone are not sufficient because the `.app` bundle is produced via `xcodebuild` with CoreBluetooth entitlements and an embedded `Info.plist`.
 - **xcodegen** — install with `brew install xcodegen`. The Xcode project is generated from `project.yml` on every build.
 
 **Privileges**
