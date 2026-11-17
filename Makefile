@@ -1,12 +1,12 @@
-# Makefile — linak-control
-# Builds, tests, and installs LinakControl (menu bar app) and deskctl (CLI).
+# Makefile — lever
+# Builds, tests, and installs Lever (menu bar app) and deskctl (CLI).
 # Targets operate on the Swift Package at LinakControl/.
 
 SWIFT_PKG_DIR := LinakControl
 BUILD_DIR     := $(SWIFT_PKG_DIR)/.build
 RELEASE_DIR   := $(BUILD_DIR)/release
 
-APP_BINARY    := LinakControl
+APP_BINARY    := Lever
 CLI_BINARY    := deskctl
 
 INSTALL_BIN   ?= /usr/local/bin
@@ -15,8 +15,8 @@ INSTALL_APP   ?= /Applications
 # Xcode project — produces a proper .app bundle required for BLE entitlements,
 # Info.plist embedding (LSUIElement, NSBluetoothAlwaysUsageDescription), and
 # SMAppService (login item) which all require a bundle identifier.
-XCODEPROJ     := LinakControl.xcodeproj
-XCODE_SCHEME  := LinakControlApp
+XCODEPROJ     := Lever.xcodeproj
+XCODE_SCHEME  := LeverApp
 XCODE_BUILD   := $(shell xcodebuild -project $(XCODEPROJ) -scheme $(XCODE_SCHEME) -configuration Release -showBuildSettings 2>/dev/null | awk '/BUILT_PRODUCTS_DIR/{print $$3}')
 
 .PHONY: help build build-debug xcode-build xcode-build-debug generate-xcodeproj test install clean lint
@@ -32,13 +32,13 @@ build: ## Build both targets in release mode (raw binaries via SPM)
 build-debug: ## Build both targets in debug mode (raw binaries via SPM)
 	cd $(SWIFT_PKG_DIR) && swift build
 
-xcode-build: generate-xcodeproj ## Build LinakControl.app bundle in release mode via Xcode
+xcode-build: generate-xcodeproj ## Build Lever.app bundle in release mode via Xcode
 	xcodebuild -project $(XCODEPROJ) -scheme $(XCODE_SCHEME) -configuration Release build
 
-xcode-build-debug: generate-xcodeproj ## Build LinakControl.app bundle in debug mode via Xcode
+xcode-build-debug: generate-xcodeproj ## Build Lever.app bundle in debug mode via Xcode
 	xcodebuild -project $(XCODEPROJ) -scheme $(XCODE_SCHEME) -configuration Debug build
 
-generate-xcodeproj: ## Regenerate LinakControl.xcodeproj from project.yml (requires xcodegen)
+generate-xcodeproj: ## Regenerate Lever.xcodeproj from project.yml (requires xcodegen)
 	@command -v xcodegen >/dev/null 2>&1 || (printf "xcodegen not found — run: brew install xcodegen\n" && exit 1)
 	xcodegen generate
 

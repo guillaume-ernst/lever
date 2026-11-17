@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/linak-control-gh-logo.png" alt="linak-control" width="600">
+  <img src="assets/linak-control-gh-logo.png" alt="Lever" width="600">
 </p>
 
-# linak-control
+# Lever
 
-macOS menu bar app and CLI for controlling LINAK DPG1C standing desks via Bluetooth Low Energy.
+macOS menu bar app and CLI for controlling LINAK DPG1C standing desks via Bluetooth Low Energy. Formerly `linak-control` — renamed after becoming an independent project.
 
 ## Features
 

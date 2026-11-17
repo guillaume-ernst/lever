@@ -1,10 +1,10 @@
-# xcodegen project spec — generates LinakControl.xcodeproj
+# xcodegen project spec — generates Lever.xcodeproj
 # Run: xcodegen generate from the repo root
 # Purpose: produce a .app bundle (SPM executable targets cannot produce .app bundles)
 
-name: LinakControl
+name: Lever
 options:
-  bundleIdPrefix: com.marcusbreiden
+  bundleIdPrefix: com.guillaumeernst
   deploymentTarget:
     macOS: "13.0"
   createIntermediateGroups: true
@@ -13,14 +13,14 @@ options:
   # for local packages. The sed command inserts it after generation so Xcode can resolve
   # LinakControlKit from the local package.
   postGenCommand: |
-    sed -i '' 's/isa = XCSwiftPackageProductDependency;$/isa = XCSwiftPackageProductDependency;\n\t\t\tpackage = 4EFDB7A01A97CE76F510C315 \/* XCLocalSwiftPackageReference "LinakControl" *\/;/' LinakControl.xcodeproj/project.pbxproj
+    sed -i '' 's/isa = XCSwiftPackageProductDependency;$/isa = XCSwiftPackageProductDependency;\n\t\t\tpackage = 4EFDB7A01A97CE76F510C315 \/* XCLocalSwiftPackageReference "LinakControl" *\/;/' Lever.xcodeproj/project.pbxproj
 
 packages:
   LinakControlKit:
     path: LinakControl
 
 targets:
-  LinakControl:
+  Lever:
     type: application
     platform: macOS
     deploymentTarget: "13.0"
@@ -32,9 +32,9 @@ targets:
       path: LinakControl/Sources/App/Info.plist
       properties:
         LSUIElement: true
-        NSBluetoothAlwaysUsageDescription: "LinakControl needs Bluetooth to communicate with your LINAK standing desk."
-        CFBundleName: LinakControl
-        CFBundleIdentifier: com.marcusbreiden.LinakControl
+        NSBluetoothAlwaysUsageDescription: "Lever needs Bluetooth to communicate with your LINAK standing desk."
+        CFBundleName: Lever
+        CFBundleIdentifier: com.guillaumeernst.Lever
         CFBundleVersion: "1"
         CFBundleShortVersionString: "1.0.0"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
@@ -45,9 +45,9 @@ targets:
         product: LinakControlKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.marcusbreiden.LinakControl
+        PRODUCT_BUNDLE_IDENTIFIER: com.guillaumeernst.Lever
         MACOSX_DEPLOYMENT_TARGET: "13.0"
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: "6.0"
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         DEVELOPMENT_TEAM: ""
@@ -57,22 +57,22 @@ targets:
         INFOPLIST_FILE: LinakControl/Sources/App/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
-  LinakControlUITests:
+  LeverUITests:
     type: bundle.ui-testing
     platform: macOS
     deploymentTarget: "13.0"
     sources:
       - path: LinakControl/Sources/UITests
     dependencies:
-      - target: LinakControl
+      - target: Lever
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.marcusbreiden.LinakControlUITests
+        PRODUCT_BUNDLE_IDENTIFIER: com.guillaumeernst.LeverUITests
         MACOSX_DEPLOYMENT_TARGET: "13.0"
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: "6.0"
         # Intentionally no TEST_TARGET_NAME: xcodebuild's preflight tries to
-        # read it as a bare binary path (.../Debug/LinakControl) and fails
-        # because our product is LinakControl.app. The test launches the
+        # read it as a bare binary path (.../Debug/Lever) and fails
+        # because our product is Lever.app. The test launches the
         # installed app via XCUIApplication(url:) — no host-app lookup needed.
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
@@ -80,16 +80,16 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
-  LinakControlApp:
+  LeverApp:
     build:
       targets:
-        LinakControl: all
-        LinakControlUITests: [test]
+        Lever: all
+        LeverUITests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - LinakControlUITests
+        - LeverUITests
     archive:
       config: Release

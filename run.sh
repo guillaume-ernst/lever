@@ -1,12 +1,12 @@
 #!/bin/bash
-# run.sh -- Build and launch LinakControl.app in debug mode.
+# run.sh -- Build and launch Lever.app in debug mode.
 # Kills any running instance first so the new build takes effect.
 # Pass --clean to wipe persisted config (first-run / scanning mode).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_NAME="LinakControl"
+APP_NAME="Lever"
 CONFIG_DIR="$HOME/Library/Application Support/LinakControl"
 CLEAN=false
 
@@ -35,7 +35,7 @@ cd "$SCRIPT_DIR"
 make xcode-build-debug 2>&1 | tail -5
 
 # Resolve the .app path from DerivedData
-APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/LinakControl-*/Build/Products/Debug -name "$APP_NAME.app" -maxdepth 1 2>/dev/null | head -1)
+APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/Lever-*/Build/Products/Debug -name "$APP_NAME.app" -maxdepth 1 2>/dev/null | head -1)
 
 if [ -z "$APP_PATH" ]; then
     echo "Error: $APP_NAME.app not found in DerivedData."

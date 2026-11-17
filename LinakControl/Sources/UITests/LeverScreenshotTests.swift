@@ -1,4 +1,4 @@
-// LinakControlScreenshotTests.swift
+// LeverScreenshotTests.swift
 // LinakControlUITests — captures documentation screenshots via XCUITest.
 //
 // Assumes ~/Library/Application Support/LinakControl/config.json has a valid
@@ -8,18 +8,18 @@
 import AppKit
 import XCTest
 
-final class LinakControlScreenshotTests: XCTestCase {
+final class LeverScreenshotTests: XCTestCase {
 
     var app: XCUIApplication!
 
     override func setUpWithError() throws {
         continueAfterFailure = false
 
-        // Target the installed app at LINAK_APP_PATH (default /Applications/LinakControl.app)
+        // Target the installed app at LINAK_APP_PATH (default /Applications/Lever.app)
         // rather than the freshly built Debug binary. The installed app has stable
         // TCC permissions for Bluetooth; a fresh ad-hoc-signed Debug build does not.
         let envPath = ProcessInfo.processInfo.environment["LINAK_APP_PATH"]
-        let appPath = envPath?.isEmpty == false ? envPath! : "/Applications/LinakControl.app"
+        let appPath = envPath?.isEmpty == false ? envPath! : "/Applications/Lever.app"
         let appURL = URL(fileURLWithPath: appPath)
         app = XCUIApplication(url: appURL)
 

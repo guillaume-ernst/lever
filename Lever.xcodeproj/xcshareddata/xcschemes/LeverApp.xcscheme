@@ -15,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "F0988E21082FF3DD3EC5DE60"
-               BuildableName = "LinakControl.app"
-               BlueprintName = "LinakControl"
-               ReferencedContainer = "container:LinakControl.xcodeproj">
+               BlueprintIdentifier = "BBDDC1FF8899030395C89E24"
+               BuildableName = "Lever.app"
+               BlueprintName = "Lever"
+               ReferencedContainer = "container:Lever.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -29,10 +29,10 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "98E20F689CD48B9A0D6577AA"
-               BuildableName = "LinakControlUITests.xctest"
-               BlueprintName = "LinakControlUITests"
-               ReferencedContainer = "container:LinakControl.xcodeproj">
+               BlueprintIdentifier = "37F09F78EC46EFD5AD57ACD3"
+               BuildableName = "LeverUITests.xctest"
+               BlueprintName = "LeverUITests"
+               ReferencedContainer = "container:Lever.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,10 +46,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "F0988E21082FF3DD3EC5DE60"
-            BuildableName = "LinakControl.app"
-            BlueprintName = "LinakControl"
-            ReferencedContainer = "container:LinakControl.xcodeproj">
+            BlueprintIdentifier = "BBDDC1FF8899030395C89E24"
+            BuildableName = "Lever.app"
+            BlueprintName = "Lever"
+            ReferencedContainer = "container:Lever.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -58,10 +58,10 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "98E20F689CD48B9A0D6577AA"
-               BuildableName = "LinakControlUITests.xctest"
-               BlueprintName = "LinakControlUITests"
-               ReferencedContainer = "container:LinakControl.xcodeproj">
+               BlueprintIdentifier = "37F09F78EC46EFD5AD57ACD3"
+               BuildableName = "LeverUITests.xctest"
+               BlueprintName = "LeverUITests"
+               ReferencedContainer = "container:Lever.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -82,10 +82,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "F0988E21082FF3DD3EC5DE60"
-            BuildableName = "LinakControl.app"
-            BlueprintName = "LinakControl"
-            ReferencedContainer = "container:LinakControl.xcodeproj">
+            BlueprintIdentifier = "BBDDC1FF8899030395C89E24"
+            BuildableName = "Lever.app"
+            BlueprintName = "Lever"
+            ReferencedContainer = "container:Lever.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -101,10 +101,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "F0988E21082FF3DD3EC5DE60"
-            BuildableName = "LinakControl.app"
-            BlueprintName = "LinakControl"
-            ReferencedContainer = "container:LinakControl.xcodeproj">
+            BlueprintIdentifier = "BBDDC1FF8899030395C89E24"
+            BuildableName = "Lever.app"
+            BlueprintName = "Lever"
+            ReferencedContainer = "container:Lever.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
