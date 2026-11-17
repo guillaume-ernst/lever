@@ -13,7 +13,7 @@ public struct DiscoveredDesk: Sendable {
 
     public init(peripheralId: UUID, name: String, rssi: Int) {
         self.peripheralId = peripheralId
-        self.name = name
+        self.name = PeripheralName.sanitize(name)
         self.rssi = rssi
     }
 }

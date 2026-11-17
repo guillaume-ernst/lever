@@ -156,7 +156,7 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
                     return
                 }
 
-                FileLog.debug("connect: calling centralManager.connect for '\(peripheral.name ?? "unknown")'", category: "ble")
+                FileLog.debug("connect: calling centralManager.connect for '\(PeripheralName.sanitize(peripheral.name, fallback: "unknown"))'", category: "ble")
                 self.connectedPeripheral = peripheral
                 peripheral.delegate = self
                 self.centralManager.connect(peripheral, options: nil)
@@ -343,7 +343,9 @@ extension BLEController: CBCentralManagerDelegate {
         advertisementData: [String: Any],
         rssi RSSI: NSNumber
     ) {
-        let name = String((peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "Unknown").prefix(64))
+        let name = PeripheralName.sanitize(
+            peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String
+        )
         FileLog.debug("didDiscover: '\(name)' id=\(peripheral.identifier) rssi=\(RSSI)", category: "ble")
 
         // Connect fallback: a paired desk found by the scan — stop scanning and connect.
@@ -366,7 +368,7 @@ extension BLEController: CBCentralManagerDelegate {
     }
 
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        FileLog.debug("didConnect: '\(peripheral.name ?? "unknown")' -- discovering services", category: "ble")
+        FileLog.debug("didConnect: '\(PeripheralName.sanitize(peripheral.name, fallback: "unknown"))' -- discovering services", category: "ble")
         peripheral.discoverServices([
             DeskUUID.controlService,
             DeskUUID.dpgService,
@@ -390,7 +392,7 @@ extension BLEController: CBCentralManagerDelegate {
         didDisconnectPeripheral peripheral: CBPeripheral,
         error: Error?
     ) {
-        FileLog.debug("didDisconnect: '\(peripheral.name ?? "unknown")' error=\(error?.localizedDescription ?? "none")", category: "ble")
+        FileLog.debug("didDisconnect: '\(PeripheralName.sanitize(peripheral.name, fallback: "unknown"))' error=\(error?.localizedDescription ?? "none")", category: "ble")
         cleanUpOnDisconnect()
         // Signal DeskManager after BLE-local state is cleared, so its reconnection
         // loop starts against a clean slate. User-initiated disconnects also fire
