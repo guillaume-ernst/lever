@@ -50,7 +50,7 @@ struct FirstRunWelcomeView: View {
                 .foregroundColor(.accentColor)
 
             VStack(spacing: 8) {
-                Text("LinakControl")
+                Text("Lever")
                     .font(.title2.weight(.semibold))
 
                 Text("Control your LINAK desk from the menu bar.")

@@ -331,7 +331,7 @@ private struct AboutSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("About LinakControl v\(appVersion)")
+            Text("About Lever v\(appVersion)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
