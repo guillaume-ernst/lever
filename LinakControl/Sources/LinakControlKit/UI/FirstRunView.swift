@@ -83,6 +83,7 @@ struct FirstRunWelcomeView: View {
 struct FirstRunScanningView: View {
 
     @ObservedObject var viewModel: DeskViewModel
+    @State private var showScanHint = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -94,7 +95,19 @@ struct FirstRunScanningView: View {
                 Text("Searching for desks nearby…")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                if showScanHint {
+                    Text("Still searching — is the controller's pairing LED blue?")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.top, 6)
+                        .transition(.opacity)
+                }
                 Spacer()
+                Button("Back") { viewModel.stopScan() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
             } else {
                 deskList
                 Divider()
@@ -103,6 +116,12 @@ struct FirstRunScanningView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+        }
+        // A scan that finds nothing must not spin silently — surface the
+        // pairing-mode reminder and the way back after a grace window.
+        .task {
+            try? await Task.sleep(for: .seconds(15))
+            withAnimation { showScanHint = true }
         }
     }
 
@@ -144,6 +163,10 @@ struct FirstRunConnectingView: View {
             Text("Connecting to \(viewModel.selectedDeskName ?? "desk")…")
                 .font(.headline)
                 .multilineTextAlignment(.center)
+
+            Button("Cancel") { viewModel.cancelConnect() }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
             Spacer()
         }

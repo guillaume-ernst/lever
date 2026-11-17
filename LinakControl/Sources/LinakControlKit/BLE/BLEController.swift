@@ -189,8 +189,15 @@ public final class BLEController: NSObject, BLEControllerProtocol, @unchecked Se
 
     public func disconnect() {
         bleQueue.async { [weak self] in
-            guard let self, let peripheral = connectedPeripheral else { return }
-            centralManager.cancelPeripheralConnection(peripheral)
+            guard let self else { return }
+            centralManager.stopScan()
+            pendingScanConnectId = nil
+            if let peripheral = connectedPeripheral {
+                centralManager.cancelPeripheralConnection(peripheral)
+            }
+            // Abort an in-flight connect — without this the continuation waits
+            // out the full deadline while the caller has already moved on.
+            takeConnectContinuation()?.resume(throwing: BLEError.connectionFailed)
         }
     }
 

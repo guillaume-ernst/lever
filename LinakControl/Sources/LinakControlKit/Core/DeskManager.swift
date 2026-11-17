@@ -94,6 +94,17 @@ public actor DeskManager {
         return bleController.scanForPeripherals()
     }
 
+    /// Stops an in-progress peripheral scan and returns to `.disconnected`.
+    ///
+    /// Used by the first-run flow's Back action; a scan that finds nothing
+    /// must be escapable rather than spin indefinitely.
+    public func stopScan() {
+        bleController.stopScan()
+        updateState {
+            if $0.connectionState == .scanning { $0.connectionState = .disconnected }
+        }
+    }
+
     /// Connects to a desk peripheral and performs the DPG1C handshake.
     ///
     /// State transitions: `.connecting` → `.connected` on success,

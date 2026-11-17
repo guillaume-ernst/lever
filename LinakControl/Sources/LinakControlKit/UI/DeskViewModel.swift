@@ -178,6 +178,29 @@ public final class DeskViewModel: ObservableObject {
         }
     }
 
+    /// Stops the first-run scan and returns to the welcome state.
+    ///
+    /// Cancels the stream task, clears any partial results, and tells the
+    /// manager to release the BLE scan so `connectionState` leaves `.scanning`.
+    public func stopScan() {
+        scanTask?.cancel()
+        scanTask = nil
+        discoveredDesks = []
+        Task { await deskManager.stopScan() }
+    }
+
+    /// Cancels an in-flight first-run connection attempt.
+    ///
+    /// `disconnect()` tears down the pending BLE connect (the controller fails
+    /// its connect continuation), so `connectionState` returns to
+    /// `.disconnected` and the flow lands back on the welcome screen.
+    public func cancelConnect() {
+        connectTask?.cancel()
+        connectTask = nil
+        isSelectingDesk = false
+        Task { await deskManager.disconnect() }
+    }
+
     /// Connects to a specific desk discovered during scanning.
     ///
     /// Captures the desk's peripheral ID and name for use in `completeFirstRun()`.
