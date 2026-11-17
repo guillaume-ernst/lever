@@ -91,6 +91,38 @@ final class CLIFormatterJSONTests: XCTestCase {
         XCTAssertEqual(code, .timeout)
     }
 
+    // MARK: - Injection regression (JSON built by encoder, not interpolation)
+
+    func testServerError_json_messageWithQuotesStaysValid() {
+        let hostile = #"bad "input" \ injected"# + "\u{1B}[31m"
+        let (msg, _) = CLIFormatter.formatError(.serverError(code: 1, message: hostile), json: true)
+        assertValidJSON(msg)
+        assertJSONContains(msg, key: "message", stringValue: hostile)
+    }
+
+    func testConnectionFailed_json_detailWithQuotesStaysValid() {
+        let hostile = #"socket "gone" \n"# + "\nforged line"
+        let (msg, _) = CLIFormatter.formatError(.connectionFailed(hostile), json: true)
+        assertValidJSON(msg)
+        assertJSONContains(msg, key: "message", stringValue: "connection failed: \(hostile)")
+    }
+
+    private func assertJSONContains(
+        _ string: String,
+        key: String,
+        stringValue expected: String,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) {
+        guard let data = string.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let actual = obj[key] as? String else {
+            XCTFail("Could not parse '\(key)' as String from JSON: \(string)", file: file, line: line)
+            return
+        }
+        XCTAssertEqual(actual, expected, file: file, line: line)
+    }
+
     // MARK: - Assertion Helpers
 
     private func assertValidJSON(_ string: String, file: StaticString = #file, line: UInt = #line) {

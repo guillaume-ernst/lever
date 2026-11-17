@@ -30,10 +30,23 @@ struct HeightCommand: ParsableCommand {
         print("\(display) \(status.unit)")
     }
 
+    private struct HeightJSON: Encodable {
+        let height_mm: Int
+        let height_display: String
+        let unit: String
+    }
+
     private func printJSON(_ status: StatusResult) {
-        let heightMM = status.heightMM ?? 0
-        let display = status.heightDisplay ?? "0.0"
-        let unit = status.unit
-        print(#"{"height_mm": \#(heightMM), "height_display": "\#(display)", "unit": "\#(unit)"}"#)
+        let payload = HeightJSON(
+            height_mm: status.heightMM ?? 0,
+            height_display: status.heightDisplay ?? "0.0",
+            unit: status.unit
+        )
+        guard let data = try? JSONEncoder().encode(payload),
+              let line = String(data: data, encoding: .utf8) else {
+            print(#"{"height_mm": 0, "height_display": "unknown", "unit": ""}"#)
+            return
+        }
+        print(line)
     }
 }

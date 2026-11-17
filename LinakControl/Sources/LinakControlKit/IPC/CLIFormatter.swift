@@ -22,25 +22,25 @@ public enum CLIFormatter {
         switch error {
         case .daemonNotRunning:
             let msg = json
-                ? #"{"error": 2, "message": "daemon not running"}"#
+                ? jsonError(code: 2, message: "daemon not running")
                 : "error: daemon not running — start LinakControl.app first"
             return (msg, .daemonNotRunning)
 
         case .connectionFailed(let detail):
             let msg = json
-                ? #"{"error": 1, "message": "connection failed: \#(detail)"}"#
+                ? jsonError(code: 1, message: "connection failed: \(detail)")
                 : "error: connection failed: \(detail)"
             return (msg, .general)
 
         case .invalidResponse:
             let msg = json
-                ? #"{"error": 1, "message": "invalid response from daemon"}"#
+                ? jsonError(code: 1, message: "invalid response from daemon")
                 : "error: invalid response from daemon"
             return (msg, .general)
 
         case .serverError(let code, let message):
             let msg = json
-                ? #"{"error": \#(code), "message": "\#(message)"}"#
+                ? jsonError(code: code, message: message)
                 : "error: \(message)"
             return (msg, mapServerCode(code))
         }
@@ -52,6 +52,20 @@ public enum CLIFormatter {
     }
 
     // MARK: - Private
+
+    private struct ErrorJSON: Encodable {
+        let error: Int
+        let message: String
+    }
+
+    /// Encodes an error object as guaranteed-valid JSON (message escaped by the encoder).
+    private static func jsonError(code: Int, message: String) -> String {
+        guard let data = try? JSONEncoder().encode(ErrorJSON(error: code, message: message)),
+              let string = String(data: data, encoding: .utf8) else {
+            return #"{"error": 1, "message": "failed to encode error"}"#
+        }
+        return string
+    }
 
     private static func mapServerCode(_ code: Int) -> CLIExitCode {
         switch code {
