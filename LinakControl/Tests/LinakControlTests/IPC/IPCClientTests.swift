@@ -56,6 +56,40 @@ private final class TestSocketServer {
         thread = t
     }
 
+    /// Start listening but never answer: accepts a connection, reads the
+    /// request, then holds the socket open until `holdFor` elapses.
+    func startSilent(holdFor: TimeInterval) throws {
+        let fd = socket(AF_UNIX, SOCK_STREAM, 0)
+        guard fd >= 0 else { throw TestServerError.socketFailed }
+
+        var addr = sockaddr_un()
+        addr.sun_family = sa_family_t(AF_UNIX)
+        withUnsafeMutablePointer(to: &addr.sun_path) { ptr in
+            socketPath.withCString { src in
+                _ = Darwin.strlcpy(UnsafeMutableRawPointer(ptr).assumingMemoryBound(to: CChar.self), src, 104)
+            }
+        }
+
+        let bindResult = withUnsafePointer(to: &addr) { ptr in
+            ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
+        }
+        guard bindResult == 0 else { close(fd); throw TestServerError.bindFailed }
+        guard listen(fd, 1) == 0 else { close(fd); throw TestServerError.listenFailed }
+        serverFD = fd
+
+        let t = Thread {
+            let clientFD = accept(fd, nil, nil)
+            guard clientFD >= 0 else { return }
+            defer { close(clientFD) }
+            _ = Self.readRequest(from: clientFD)
+            Thread.sleep(forTimeInterval: holdFor)
+        }
+        t.start()
+        thread = t
+    }
+
     func stop() {
         if serverFD >= 0 { close(serverFD); serverFD = -1 }
         unlink(socketPath)
@@ -329,6 +363,62 @@ final class IPCClientInvalidResponseTests: XCTestCase {
         XCTAssertThrowsError(try client.stop()) { error in
             XCTAssertEqual(error as? IPCClientError, .invalidResponse)
         }
+    }
+}
+
+// MARK: - Response-ID Correlation Tests
+
+final class IPCClientResponseIdTests: XCTestCase {
+
+    /// A response whose id does not match the request must be rejected — the
+    /// client must not trust whatever frame arrives first.
+    func testMismatchedResponseId_throwsInvalidResponse() throws {
+        let server = TestSocketServer()
+        try server.start { _ in
+            makeStatusResponse(id: "not-the-request-id", status: makeStatusResult())
+        }
+        defer { server.stop() }
+
+        let client = makeClient(socketPath: server.socketPath)
+        XCTAssertThrowsError(try client.getStatus()) { error in
+            XCTAssertEqual(error as? IPCClientError, .invalidResponse)
+        }
+    }
+
+    func testErrorResponseWithMismatchedId_throwsInvalidResponse() throws {
+        let server = TestSocketServer()
+        try server.start { _ in
+            makeErrorResponse(id: "forged", code: 1, message: "boom")
+        }
+        defer { server.stop() }
+
+        let client = makeClient(socketPath: server.socketPath)
+        XCTAssertThrowsError(try client.getStatus()) { error in
+            XCTAssertEqual(error as? IPCClientError, .invalidResponse)
+        }
+    }
+}
+
+// MARK: - Read Timeout Tests
+
+final class IPCClientTimeoutTests: XCTestCase {
+
+    /// A responder that accepts but never answers must hit the read timeout,
+    /// not block deskctl forever.
+    func testSilentResponder_throwsTimeout() throws {
+        let server = TestSocketServer()
+        try server.startSilent(holdFor: 5)
+        defer { server.stop() }
+
+        let client = IPCClient(socketPath: server.socketPath, readTimeout: 0.3)
+        let started = ContinuousClock.now
+        XCTAssertThrowsError(try client.getStatus()) { error in
+            XCTAssertEqual(error as? IPCClientError, .timeout)
+        }
+        XCTAssertLessThan(
+            ContinuousClock.now - started, .seconds(2),
+            "A silent responder must fail fast, not hang"
+        )
     }
 }
 

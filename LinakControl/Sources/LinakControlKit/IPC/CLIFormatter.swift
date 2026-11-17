@@ -43,6 +43,12 @@ public enum CLIFormatter {
                 ? jsonError(code: code, message: message)
                 : "error: \(message)"
             return (msg, mapServerCode(code))
+
+        case .timeout:
+            let msg = json
+                ? jsonError(code: 5, message: "request timed out")
+                : "error: request timed out — daemon not responding"
+            return (msg, .timeout)
         }
     }
 

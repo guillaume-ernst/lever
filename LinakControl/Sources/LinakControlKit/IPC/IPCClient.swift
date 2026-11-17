@@ -12,11 +12,13 @@ public enum IPCClientError: Error, Equatable {
     case connectionFailed(String)
     case invalidResponse
     case serverError(code: Int, message: String)
+    case timeout
 
     public static func == (lhs: IPCClientError, rhs: IPCClientError) -> Bool {
         switch (lhs, rhs) {
         case (.daemonNotRunning, .daemonNotRunning): return true
         case (.invalidResponse, .invalidResponse): return true
+        case (.timeout, .timeout): return true
         case (.connectionFailed(let l), .connectionFailed(let r)): return l == r
         case (.serverError(let lc, let lm), .serverError(let rc, let rm)): return lc == rc && lm == rm
         default: return false
@@ -29,22 +31,34 @@ public enum IPCClientError: Error, Equatable {
 /// Synchronous Unix domain socket client for the deskctl CLI.
 public final class IPCClient {
     private let socketPath: String
+    private let readTimeout: TimeInterval
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    public init(socketPath: String = IPCConstants.socketPath) {
+    public init(socketPath: String = IPCConstants.socketPath, readTimeout: TimeInterval = 10) {
         self.socketPath = socketPath
+        self.readTimeout = readTimeout
     }
 
     // MARK: - Public Interface
 
     /// Send a request and wait for the response.
+    ///
+    /// Rejects responses whose `id` does not match the request — the first
+    /// deframed frame is not trusted blindly.
     public func send(_ request: IPCRequest) throws -> IPCResponse {
         let fd = try openConnection()
         defer { close(fd) }
 
         try writeRequest(request, to: fd)
-        return try readResponse(from: fd)
+        let response = try readResponse(from: fd)
+        guard response.id == request.id else {
+            throw IPCClientError.invalidResponse
+        }
+        if let err = response.error {
+            throw IPCClientError.serverError(code: err.code, message: err.message)
+        }
+        return response
     }
 
     public func getStatus() throws -> StatusResult {
@@ -87,6 +101,13 @@ public final class IPCClient {
         guard fd >= 0 else {
             throw IPCClientError.connectionFailed("socket() failed: \(String(cString: strerror(errno)))")
         }
+
+        // Bound every read() — a silent or stalled responder must not block
+        // deskctl forever (maps to IPCClientError.timeout in readResponse).
+        var tv = timeval()
+        tv.tv_sec = Int(readTimeout)
+        tv.tv_usec = __darwin_suseconds_t((readTimeout - Double(Int(readTimeout))) * 1_000_000)
+        _ = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
 
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
@@ -155,6 +176,9 @@ public final class IPCClient {
             }
 
             if bytesRead < 0 {
+                if errno == EAGAIN || errno == EWOULDBLOCK {
+                    throw IPCClientError.timeout
+                }
                 throw IPCClientError.connectionFailed("read() failed: \(String(cString: strerror(errno)))")
             }
             if bytesRead == 0 && buffer.isEmpty {
@@ -174,18 +198,11 @@ public final class IPCClient {
     }
 
     private func decodeResponse(_ data: Data) throws -> IPCResponse {
-        let response: IPCResponse
         do {
-            response = try decoder.decode(IPCResponse.self, from: data)
+            return try decoder.decode(IPCResponse.self, from: data)
         } catch {
             throw IPCClientError.invalidResponse
         }
-
-        if let err = response.error {
-            throw IPCClientError.serverError(code: err.code, message: err.message)
-        }
-
-        return response
     }
 
     // MARK: - Result Extraction
