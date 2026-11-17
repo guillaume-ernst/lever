@@ -28,7 +28,8 @@ struct StatusCommand: ParsableCommand {
     private func printTable(_ status: StatusResult) {
         let connectionLabel = status.connected ? "connected" : "disconnected"
         let deskLabel = status.deskName ?? "unknown"
-        let heightLabel = status.heightDisplay.map { "\($0) \(status.unit)" } ?? "unknown"
+        // heightDisplay already carries the unit ("114.4 cm") — don't append it again.
+        let heightLabel = status.heightDisplay ?? "unknown"
         let presetsLabel = formatPresets(status.presets, active: status.activePreset, unit: status.unit)
 
         print("Lever Daemon")
